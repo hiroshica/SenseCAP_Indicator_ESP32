@@ -956,9 +956,16 @@ static void __view_event_handler(void* handler_args, esp_event_base_t base, int3
                     default:
                         break;
                 }
-    
+                char buf[32];
+                lv_snprintf(buf, sizeof(buf), IPSTR,IP2STR(&p_st->ipaddr));
+                lv_label_set_text(ui_ipaddr, buf);
+                lv_label_set_text(ui_ipaddr2, buf);
+                lv_label_set_text(ui_ipaddr3, buf);
             } else {
                 p_src = &ui_img_wifi_disconet_png;
+                lv_label_set_text(ui_ipaddr, "-.-.-.-");
+                lv_label_set_text(ui_ipaddr2, "-.-.-.-");
+                lv_label_set_text(ui_ipaddr3, "-.-.-.-");
             }
 
             lv_img_set_src(ui_wifi_st_1 , (void *)p_src);

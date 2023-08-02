@@ -23,6 +23,7 @@ extern lv_obj_t *ui_min_dis;
 extern lv_obj_t *ui_colon;
 extern lv_obj_t *ui_adorn;
 extern lv_obj_t *ui_wifi_st_1;
+extern lv_obj_t *ui_ipaddr;
 extern lv_obj_t *ui_date_panel;
 extern lv_obj_t *ui_date;
 extern lv_obj_t *ui_location;
@@ -33,7 +34,9 @@ extern lv_obj_t *ui_screen_sensor;
 void ui_event_wifi__st_button_2( lv_event_t * e);
 extern lv_obj_t *ui_wifi__st_button_2;
 extern lv_obj_t *ui_wifi_st_2;
+//
 extern lv_obj_t *ui_time2;
+extern lv_obj_t *ui_ipaddr2;
 //
 extern lv_obj_t *ui_co2;
 extern lv_obj_t *ui_co2_icon;
@@ -71,6 +74,7 @@ void ui_event_wifi__st_button_3( lv_event_t * e);
 extern lv_obj_t *ui_wifi__st_button_3;
 extern lv_obj_t *ui_wifi_st_3;
 extern lv_obj_t *ui_time3;
+extern lv_obj_t *ui_ipaddr3;
 extern lv_obj_t *ui_setting_icon;
 extern lv_obj_t *ui_setting_title;
 void ui_event_setting_wifi( lv_event_t * e);

@@ -15,6 +15,11 @@ enum start_screen{
 
 #define WIFI_SCAN_LIST_SIZE  15
 
+struct view_ip4_addr {
+    uint32_t addr;  /*!< IPv4 address */
+};
+typedef struct view_ip4_addr view_ip4_addr_t;
+
 struct view_data_wifi_st
 {
     bool   is_connected;
@@ -22,6 +27,7 @@ struct view_data_wifi_st
     bool   is_network;  //is connect network
     char   ssid[32];
     int8_t rssi;
+    view_ip4_addr_t ipaddr;
 };
 
 

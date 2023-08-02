@@ -20,8 +20,9 @@
 struct indicator_wifi
 {
     struct view_data_wifi_st  st;
+    esp_ip_addr_t ipaddr;
     bool is_cfg;
-    int wifi_reconnect_cnt;  
+    int wifi_reconnect_cnt; 
 };
 
 static struct indicator_wifi _g_wifi_model;
@@ -86,7 +87,8 @@ static void __wifi_event_handler(void* arg, esp_event_base_t event_base,
             st.is_connected = true;
             st.is_connecting = false;
             __wifi_st_set(&st);
-            
+            //
+
             esp_event_post_to(view_event_handle, VIEW_EVENT_BASE, VIEW_EVENT_WIFI_ST, &st, sizeof(struct view_data_wifi_st ), portMAX_DELAY);
             
             struct view_data_wifi_connet_ret_msg msg;
@@ -136,7 +138,10 @@ static void __ip_event_handler(void* arg, esp_event_base_t event_base,
         ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
         ESP_LOGI(TAG, "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
         s_retry_num = 0;
-
+        struct view_data_wifi_st st;
+        __wifi_st_get(&st);
+        st.ipaddr.addr = event->ip_info.ip.addr;
+        __wifi_st_set(&st);
         //xEventGroupSetBits(__wifi_event_group, WIFI_CONNECTED_BIT);
         xSemaphoreGive(__g_net_check_sem);  //goto check network
     }
