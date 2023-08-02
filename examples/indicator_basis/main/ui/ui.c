@@ -613,10 +613,10 @@ lv_obj_set_style_text_font(ui_pa_data, &ui_font_font2, LV_PART_MAIN| LV_STATE_DE
 ui_pa_unit = lv_label_create(ui_pa);
 lv_obj_set_width( ui_pa_unit, LV_SIZE_CONTENT);  /// 1
 lv_obj_set_height( ui_pa_unit, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_x( ui_pa_unit,  30 );         /// 35
+lv_obj_set_x( ui_pa_unit,  35 );         /// 35
 lv_obj_set_y( ui_pa_unit,   0 );           /// 0
 lv_obj_set_align( ui_pa_unit, LV_ALIGN_CENTER );
-lv_label_set_text(ui_pa_unit,"Pa");
+lv_label_set_text(ui_pa_unit,"hPa");
 lv_obj_set_style_text_font(ui_pa_unit, &ui_font_font0, LV_PART_MAIN| LV_STATE_DEFAULT);
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
