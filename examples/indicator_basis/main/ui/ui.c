@@ -525,9 +525,9 @@ lv_label_set_text(ui_time2,"21:20");
 lv_obj_set_style_text_font(ui_time2, &ui_font_font1, LV_PART_MAIN| LV_STATE_DEFAULT);
 
 ui_co2 = lv_btn_create(ui_screen_sensor);
-lv_obj_set_width( ui_co2, 436);
+lv_obj_set_width( ui_co2, 140);           /// 436
 lv_obj_set_height( ui_co2, 140);
-lv_obj_set_x( ui_co2, 0 );
+lv_obj_set_x( ui_co2, -148 );                /// 0
 lv_obj_set_y( ui_co2, -100 );
 lv_obj_set_align( ui_co2, LV_ALIGN_CENTER );
 lv_obj_add_flag( ui_co2, LV_OBJ_FLAG_SCROLL_ON_FOCUS );   /// Flags
@@ -539,7 +539,7 @@ ui_co2_icon = lv_img_create(ui_co2);
 lv_img_set_src(ui_co2_icon, &ui_img_co2_png);
 lv_obj_set_width( ui_co2_icon, LV_SIZE_CONTENT);  /// 44
 lv_obj_set_height( ui_co2_icon, LV_SIZE_CONTENT);   /// 53
-lv_obj_set_x( ui_co2_icon, -184 );
+lv_obj_set_x( ui_co2_icon, -40 );
 lv_obj_set_y( ui_co2_icon, -40 );
 lv_obj_set_align( ui_co2_icon, LV_ALIGN_CENTER );
 lv_obj_add_flag( ui_co2_icon, LV_OBJ_FLAG_ADV_HITTEST );   /// Flags
@@ -548,27 +548,27 @@ lv_obj_clear_flag( ui_co2_icon, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
 ui_co2_title = lv_label_create(ui_co2);
 lv_obj_set_width( ui_co2_title, LV_SIZE_CONTENT);  /// 1
 lv_obj_set_height( ui_co2_title, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_x( ui_co2_title, -134 );
+lv_obj_set_x( ui_co2_title, 10 );
 lv_obj_set_y( ui_co2_title, -40 );
 lv_obj_set_align( ui_co2_title, LV_ALIGN_CENTER );
 lv_label_set_text(ui_co2_title,"CO2");
 lv_obj_set_style_text_font(ui_co2_title, &ui_font_font0, LV_PART_MAIN| LV_STATE_DEFAULT);
 
 ui_co2_data = lv_label_create(ui_co2);
-lv_obj_set_width( ui_co2_data, 200);
+lv_obj_set_width( ui_co2_data, 100);
 lv_obj_set_height( ui_co2_data, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_x( ui_co2_data, -90 );
-lv_obj_set_y( ui_co2_data, -1 );
+lv_obj_set_x( ui_co2_data, -40 );         //-90
+lv_obj_set_y( ui_co2_data,   0 );
 lv_obj_set_align( ui_co2_data, LV_ALIGN_CENTER );
 lv_label_set_text(ui_co2_data,"N/A ");
 lv_obj_set_style_text_align(ui_co2_data, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_set_style_text_font(ui_co2_data, &ui_font_font3, LV_PART_MAIN| LV_STATE_DEFAULT);
+lv_obj_set_style_text_font(ui_co2_data, &ui_font_font2, LV_PART_MAIN| LV_STATE_DEFAULT);
 
 ui_co2_unit = lv_label_create(ui_co2);
 lv_obj_set_width( ui_co2_unit, LV_SIZE_CONTENT);  /// 1
 lv_obj_set_height( ui_co2_unit, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_x( ui_co2_unit, 35 );
-lv_obj_set_y( ui_co2_unit, 0 );
+lv_obj_set_x( ui_co2_unit, 35 );         /// 35
+lv_obj_set_y( ui_co2_unit,  0 );           /// 0
 lv_obj_set_align( ui_co2_unit, LV_ALIGN_CENTER );
 lv_label_set_text(ui_co2_unit,"ppm");
 lv_obj_set_style_text_font(ui_co2_unit, &ui_font_font0, LV_PART_MAIN| LV_STATE_DEFAULT);
