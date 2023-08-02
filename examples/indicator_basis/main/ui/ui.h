@@ -34,11 +34,18 @@ void ui_event_wifi__st_button_2( lv_event_t * e);
 extern lv_obj_t *ui_wifi__st_button_2;
 extern lv_obj_t *ui_wifi_st_2;
 extern lv_obj_t *ui_time2;
+//
 extern lv_obj_t *ui_co2;
 extern lv_obj_t *ui_co2_icon;
 extern lv_obj_t *ui_co2_title;
 extern lv_obj_t *ui_co2_data;
 extern lv_obj_t *ui_co2_unit;
+//
+extern lv_obj_t *ui_pa;
+extern lv_obj_t *ui_pa_title;
+extern lv_obj_t *ui_pa_data;
+extern lv_obj_t *ui_pa_unit;
+//
 extern lv_obj_t *ui_tvoc_2;
 extern lv_obj_t *ui_tvoc_icon_2;
 extern lv_obj_t *ui_tvoc_title_2;

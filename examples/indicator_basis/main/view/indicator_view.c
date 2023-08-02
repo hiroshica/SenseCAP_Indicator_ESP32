@@ -1052,6 +1052,12 @@ static void __view_event_handler(void* handler_args, esp_event_base_t base, int3
                     lv_label_set_text(ui_humidity_data_2, data_buf);
                     break;
                 }
+                case SENSOR_DATA_PA: {
+                    snprintf(data_buf, sizeof(data_buf), "%d", (int)p_data->vaule);
+                    ESP_LOGI(TAG, "update pa:%s", data_buf);
+                    lv_label_set_text(ui_pa_data, data_buf);
+                    break;
+                }
             default:
                 break;
             }
@@ -1086,6 +1092,12 @@ static void __view_event_handler(void* handler_args, esp_event_base_t base, int3
                     sensor_chart.color = lv_color_hex(0x4EACE4);
                     sensor_chart.p_info = p_data;
                     strcpy(sensor_chart.name, "Humidity");
+                    break;
+                }
+                case SENSOR_DATA_PA: {
+                    sensor_chart.color = lv_color_hex(0x4169e1);
+                    sensor_chart.p_info = p_data;
+                    strcpy(sensor_chart.name, "PA");
                     break;
                 }
             default:

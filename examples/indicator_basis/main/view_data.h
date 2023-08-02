@@ -94,6 +94,7 @@ enum sensor_data_type{
     SENSOR_DATA_TVOC,
     SENSOR_DATA_TEMP,
     SENSOR_DATA_HUMIDITY,
+    SENSOR_DATA_PA,
 };
 
 struct view_data_sensor_data
@@ -135,6 +136,7 @@ enum {
     VIEW_EVENT_SENSOR_HUMIDITY_HISTORY,
     VIEW_EVENT_SENSOR_TVOC_HISTORY,
     VIEW_EVENT_SENSOR_CO2_HISTORY,
+    VIEW_EVENT_SENSOR_PA_HISTORY,
 
     VIEW_EVENT_SENSOR_DATA_HISTORY, //struct view_data_sensor_history_data
 
