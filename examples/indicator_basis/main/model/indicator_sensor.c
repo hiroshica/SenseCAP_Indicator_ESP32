@@ -68,6 +68,7 @@ struct indicator_sensor_present_data
     struct sensor_present_data humidity;
     struct sensor_present_data co2;
     struct sensor_present_data tvoc;
+    struct sensor_present_data pa;
 };
 
 
@@ -77,6 +78,7 @@ struct indicator_sensor_history_data
     struct sensor_history_data humidity;
     struct sensor_history_data co2;
     struct sensor_history_data tvoc;
+    struct sensor_history_data pa;
 };
 
 struct updata_queue_msg
@@ -818,6 +820,15 @@ static void __view_event_handler(void* handler_args, esp_event_base_t base, int3
             esp_event_post_to(view_event_handle, VIEW_EVENT_BASE, VIEW_EVENT_SENSOR_DATA_HISTORY, &data, sizeof(struct view_data_sensor_history_data ), portMAX_DELAY);
             break;
         }
+        case VIEW_EVENT_SENSOR_PA_HISTORY: {
+            ESP_LOGI(TAG, "event: VIEW_EVENT_SENSOR_PA_HISTORY");
+            struct view_data_sensor_history_data data;
+            __sensor_history_data_get( &__g_sensor_history_data.pa,  &data);
+            data.sensor_type = SENSOR_DATA_PA;
+            data.resolution  = 0;
+            esp_event_post_to(view_event_handle, VIEW_EVENT_BASE, VIEW_EVENT_SENSOR_DATA_HISTORY, &data, sizeof(struct view_data_sensor_history_data ), portMAX_DELAY);
+            break;
+        }
 
         case VIEW_EVENT_SHUTDOWN: {
             ESP_LOGI(TAG, "event: VIEW_EVENT_SHUTDOWN");
@@ -1054,6 +1065,9 @@ int indicator_sensor_init(void)
                                                             __view_event_handler, NULL, NULL));
     ESP_ERROR_CHECK(esp_event_handler_instance_register_with(view_event_handle, 
                                                             VIEW_EVENT_BASE, VIEW_EVENT_SENSOR_CO2_HISTORY, 
+                                                            __view_event_handler, NULL, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_instance_register_with(view_event_handle, 
+                                                            VIEW_EVENT_BASE, VIEW_EVENT_SENSOR_PA_HISTORY, 
                                                             __view_event_handler, NULL, NULL));
     ESP_ERROR_CHECK(esp_event_handler_instance_register_with(view_event_handle, 
                                                             VIEW_EVENT_BASE, VIEW_EVENT_SHUTDOWN, 
