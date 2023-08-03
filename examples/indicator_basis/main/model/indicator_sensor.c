@@ -416,6 +416,9 @@ static void __sensor_history_data_check(time_t now)
     __sensor_history_data_day_check(__g_sensor_history_data.tvoc.data_day,   "TVOC", now - 3600);
     __sensor_history_data_week_check(__g_sensor_history_data.tvoc.data_week, "TVOC",  now - 3600 * 24);
 
+    __sensor_history_data_day_check(__g_sensor_history_data.pa.data_day,   "Atmosphere", now - 3600);
+    __sensor_history_data_week_check(__g_sensor_history_data.pa.data_week, "Atmosphere",  now - 3600 * 24);
+
     xSemaphoreGive(__g_data_mutex);
 }
 
@@ -430,6 +433,8 @@ static void __sensor_history_data_day_update(time_t now)
     __sensor_history_data_day_insert( __g_sensor_history_data.co2.data_day, &__g_sensor_present_data.co2, now);
 
     __sensor_history_data_day_insert( __g_sensor_history_data.tvoc.data_day, &__g_sensor_present_data.tvoc, now);
+
+    __sensor_history_data_day_insert( __g_sensor_history_data.pa.data_day, &__g_sensor_present_data.pa, now);
 
     xSemaphoreGive(__g_data_mutex);
 
@@ -447,6 +452,8 @@ static void __sensor_history_data_week_update(time_t now)
     __sensor_history_data_week_insert(__g_sensor_history_data.co2.data_week, &__g_sensor_present_data.co2, now);
     
     __sensor_history_data_week_insert(__g_sensor_history_data.tvoc.data_week, &__g_sensor_present_data.tvoc, now);
+
+    __sensor_history_data_week_insert(__g_sensor_history_data.pa.data_week, &__g_sensor_present_data.pa, now);
 
     xSemaphoreGive(__g_data_mutex);
 
@@ -674,7 +681,7 @@ static int __data_parse_handle(uint8_t *p_data, ssize_t len)
     
             data.sensor_type = SENSOR_DATA_PA;
             memcpy(&data.vaule, &p_data[1], sizeof(data.vaule));
-            __sensor_present_data_update(&__g_sensor_present_data.co2, data.vaule);
+            __sensor_present_data_update(&__g_sensor_present_data.pa, data.vaule);
 
             esp_event_post_to(view_event_handle, VIEW_EVENT_BASE, VIEW_EVENT_SENSOR_DATA, \
                            &data, sizeof(struct view_data_sensor_data ), portMAX_DELAY);

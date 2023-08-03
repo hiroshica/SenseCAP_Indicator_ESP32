@@ -672,8 +672,8 @@ void ui_screen_sensor_screen_init(void)
       ui_pa_title = lv_label_create(ui_pa);
       lv_obj_set_width(ui_pa_title, LV_SIZE_CONTENT);  /// 1
       lv_obj_set_height(ui_pa_title, LV_SIZE_CONTENT); /// 1
-      lv_obj_set_x(ui_pa_title, 8);
-      lv_obj_set_y(ui_pa_title, -30);
+      lv_obj_set_x(ui_pa_title,   0);
+      lv_obj_set_y(ui_pa_title, -40);
       lv_obj_set_align(ui_pa_title, LV_ALIGN_CENTER);
       lv_label_set_text(ui_pa_title, "Atmosphere");
       lv_obj_set_style_text_font(ui_pa_title, &ui_font_font0, LV_PART_MAIN | LV_STATE_DEFAULT);
