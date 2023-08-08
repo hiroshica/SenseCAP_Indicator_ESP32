@@ -275,7 +275,7 @@ void sensor_chart_update(sensor_chart_display_t *p_display)
 void sensor_chart_event_init(void)
 {
     int i = 0;
-    struct view_data_sensor_history_data  default_sensor_info;
+    static struct view_data_sensor_history_data  default_sensor_info;
 
     default_sensor_info.resolution = 1;
 
