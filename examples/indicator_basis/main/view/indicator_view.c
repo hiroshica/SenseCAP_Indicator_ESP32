@@ -26,7 +26,7 @@ typedef struct sensor_chart_display
     struct view_data_sensor_history_data *p_info;
 } sensor_chart_display_t;
 
-static char date_hour[24][6] = { };
+static char date_hour[DAY_MAX][6] = { };
 static char date_day[7][6] = { };
 static uint16_t sensor_data_resolution = 0;
 static uint16_t sensor_data_multiple = 1;
@@ -209,6 +209,7 @@ void sensor_chart_update(sensor_chart_display_t *p_display)
     }
     chart_week_min = (p_info->week_min - diff / 2.0); // sub quad
     chart_week_max = (p_info->week_max + diff / 2.0); //add quad
+    int count = 0;
 
 	lv_label_set_text(ui_sensor_data_title,p_display->name);
 
@@ -220,16 +221,25 @@ void sensor_chart_update(sensor_chart_display_t *p_display)
 	lv_chart_set_series_color(ui_sensor_chart_week, ui_sensor_chart_week_series_low, p_display->color);
 	lv_chart_set_series_color(ui_sensor_chart_week, ui_sensor_chart_week_series_hight, p_display->color);
 
-    for(i = 0; i < 24; i++) {
+    //ESP_LOGI(TAG, "pass %d",count);
+    for(i = 0; i < DAY_MAX; i++) {
+        //ESP_LOGI(TAG, "loop in %d",i);
     	if( p_info->data_day[i].valid ) {
     		lv_chart_set_value_by_id(ui_sensor_chart_day, ui_sensor_chart_day_series, i,  sensor_data_multiple * p_info->data_day[i].data );
+            //ESP_LOGI(TAG, "loop A %d",i);
     	} else {
     		lv_chart_set_value_by_id(ui_sensor_chart_day, ui_sensor_chart_day_series, i, LV_CHART_POINT_NONE);
+            //ESP_LOGI(TAG, "loop B %d",i);
     	}
+        //ESP_LOGI(TAG, "pass L0 %d:%d",count,i);
     	struct tm timeinfo = { 0 };
     	localtime_r(&p_info->data_day[i].timestamp, &timeinfo);
-    	lv_snprintf((char*)&date_hour[i][0], 6, "%02d:00", timeinfo.tm_hour);
+        //ESP_LOGI(TAG, "pass L1 %02d:%02d", timeinfo.tm_hour,timeinfo.tm_min);
+    	lv_snprintf((char*)&date_hour[i][0], 6, "%02d:%02d", timeinfo.tm_hour,timeinfo.tm_min);
+        //ESP_LOGI(TAG, "pass L2 %d:%d",count,i);
     }
+    //count++;
+    //ESP_LOGI(TAG, "pass %d",count++);
 
     for(i = 0; i < 7; i++) {
 
@@ -246,14 +256,20 @@ void sensor_chart_update(sensor_chart_display_t *p_display)
 
     	lv_snprintf((char*)&date_day[i][0], 6, "%02d/%02d",timeinfo.tm_mon + 1, timeinfo.tm_mday);
     }
+    ESP_LOGI(TAG, "pass %d",count++);
 
     //change type color
-   lv_disp_t *dispp = lv_disp_get_default();
-   lv_theme_t *theme = lv_theme_default_init(dispp, p_display->color, lv_palette_main(LV_PALETTE_RED), true, LV_FONT_DEFAULT);
-   lv_disp_set_theme(dispp, theme);
+    lv_disp_t *dispp = lv_disp_get_default();
+    ESP_LOGI(TAG, "pass %d",count++);
+    lv_theme_t *theme = lv_theme_default_init(dispp, p_display->color, lv_palette_main(LV_PALETTE_RED), true, LV_FONT_DEFAULT);
+    ESP_LOGI(TAG, "pass %d",count++);
+    lv_disp_set_theme(dispp, theme);
+    ESP_LOGI(TAG, "pass %d",count++);
 
     lv_chart_refresh(ui_sensor_chart_day);
+    ESP_LOGI(TAG, "pass %d",count++);
     lv_chart_refresh(ui_sensor_chart_week);
+    ESP_LOGI(TAG, "pass %d",count++);
 }
 
 void sensor_chart_event_init(void)
@@ -265,16 +281,18 @@ void sensor_chart_event_init(void)
 
     time_t now = 0;
     time(&now);
-    time_t time1 = (time_t)(now / 3600) * 3600;
-    time_t time2 = (time_t)(now / 3600 / 24) * 3600 * 24;
-    
+    time_t time1 = (time_t)(now / SECOND_ADJUST) * SECOND_ADJUST;
+    time_t time2 = (time_t)(now / (SECOND_ADJUST * DAY_MAX)) * (SECOND_ADJUST * DAY_MAX);
+
     float min=90;
     float max=10;
 
-    for(i = 0; i < 24; i++) { 
+    for(i = 0; i < DAY_MAX; i++) { 
         default_sensor_info.data_day[i].data = (float)lv_rand(10, 90);
-        default_sensor_info.data_day[i].timestamp = time1 + i *3600;
+        default_sensor_info.data_day[i].timestamp = time1;
+        time1 += SECOND_ADJUST;
         default_sensor_info.data_day[i].valid = true;
+        //ESP_LOGI(TAG, "create timstamp %d::%lld", i, default_sensor_info.data_day[i].timestamp);
         
         if( min > default_sensor_info.data_day[i].data) {
             min = default_sensor_info.data_day[i].data;
@@ -293,7 +311,7 @@ void sensor_chart_event_init(void)
     for(i = 0; i < 7; i++) { 
         default_sensor_info.data_week[i].max = (float)lv_rand(60, 90);
         default_sensor_info.data_week[i].min = (float)lv_rand(10, 40);
-        default_sensor_info.data_week[i].timestamp =  time2 + i * 3600 * 24;;
+        default_sensor_info.data_week[i].timestamp =  time2 + i * (SECOND_ADJUST *DAY_MAX);
         default_sensor_info.data_week[i].valid = true;
 
         if( min > default_sensor_info.data_week[i].min) {
@@ -314,7 +332,7 @@ void sensor_chart_event_init(void)
     strcpy(default_chart.units, "%%");
 
     
-
+    //ESP_LOGI(TAG, "==== update 1====");
     sensor_chart_update( &default_chart);
 
     lv_obj_add_event_cb(ui_sensor_chart_day, event_chart_day_cb, LV_EVENT_ALL, NULL);
@@ -1131,6 +1149,7 @@ static void __view_event_handler(void* handler_args, esp_event_base_t base, int3
             default:
                 break;
             }
+            ESP_LOGI(TAG, "==== update 2===="); 
             sensor_chart_update( &sensor_chart);
 
             break;

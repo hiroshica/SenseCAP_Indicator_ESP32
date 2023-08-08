@@ -5,6 +5,7 @@
 #include "nvs.h"
 #include<stdlib.h>
 #include "time.h"
+#include "history.h"
 
 #define SENSOR_HISTORY_DATA_DEBUG  1
 #define SENSOR_COMM_DEBUG    0
@@ -19,9 +20,6 @@
 #define ESP32_COMM_BAUD_RATE     (115200)
 #define ESP32_RP2040_COMM_TASK_STACK_SIZE    (1024*4)
 #define BUF_SIZE (512)
-
-#define DAY_MAX  (24*6)             // 10 minute
-#define SECOND_ADJUST  (600) //(3600)
 
 uint8_t buf[BUF_SIZE];   //recv 
 uint8_t data[BUF_SIZE];  //decode

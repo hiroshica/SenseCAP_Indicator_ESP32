@@ -37,7 +37,7 @@ void app_main(void)
     ESP_ERROR_CHECK(bsp_board_init());
     lv_port_init();
 
-
+    indicator_storage_init();
 
     esp_event_loop_args_t view_event_task_args = {
         .queue_size = 10,

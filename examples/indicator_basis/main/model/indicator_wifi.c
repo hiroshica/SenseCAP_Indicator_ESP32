@@ -43,8 +43,8 @@ static const char *TAG = "wifi-model";
 
 static int min(int a, int b) { return (a < b) ? a : b; }
 
-static void StartServer();
-static void StopServer();
+//static void StartServer();
+//static void StopServer();
 
 
 static void __wifi_st_set( struct view_data_wifi_st *p_st )
@@ -149,7 +149,7 @@ static void __ip_event_handler(void* arg, esp_event_base_t event_base,
         __wifi_st_set(&st);
         //xEventGroupSetBits(__wifi_event_group, WIFI_CONNECTED_BIT);
         xSemaphoreGive(__g_net_check_sem);  //goto check network
-        StartServer();
+        //StartServer();
        
     }
 }
@@ -232,7 +232,7 @@ static void __wifi_shutdown(void)
 {
     _g_wifi_model.is_cfg = false;  //disable reconnect
 
-    StopServer();
+    //StopServer();
 
     struct view_data_wifi_st st = {0};
     st.is_connected = false;
@@ -516,6 +516,7 @@ int indicator_wifi_init(void)
     return 0;
 }
 
+#if 0
 extern const char* base_path;
 
 static void StartServer(){
@@ -526,3 +527,4 @@ static void StartServer(){
 static void StopServer(){
     stop_webserver();    
 }
+#endif

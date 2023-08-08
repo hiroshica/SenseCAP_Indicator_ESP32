@@ -2,6 +2,7 @@
 #define VIEW_DATA_H
 
 #include "config.h"
+#include "history.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -112,7 +113,7 @@ struct view_data_sensor_data
 struct view_data_sensor_history_data
 {
     enum sensor_data_type sensor_type;
-    struct sensor_data_average data_day[24];
+    struct sensor_data_average data_day[DAY_MAX];
     struct sensor_data_minmax data_week[7];
     uint8_t resolution;
     

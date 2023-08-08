@@ -5,6 +5,7 @@
 
 #include "ui.h"
 #include "ui_helpers.h"
+#include "history.h"
 
 ///////////////////// VARIABLES ////////////////////
 void up_Animation(lv_obj_t *TargetObject, int delay);
@@ -1644,15 +1645,18 @@ void ui_screen_sensor_chart_screen_init()
       lv_obj_set_style_border_color(ui_sensor_chart_day, lv_color_hex(0x101418), LV_PART_MAIN | LV_STATE_DEFAULT);
 
       lv_obj_refresh_ext_draw_size(ui_sensor_chart_day);
-      lv_chart_set_zoom_x(ui_sensor_chart_day, 800);
+      int day_width =  800 * DAY_DIV_DATA;
+      int day_left = 200;
+      int day_right = day_width - day_left;
+      lv_chart_set_zoom_x(ui_sensor_chart_day,day_width);
 
       // lv_chart_set_axis_tick(ui_sensor_chart_day, LV_CHART_AXIS_PRIMARY_Y, 0, 0, 5, 1, true, 80);
-      lv_chart_set_axis_tick(ui_sensor_chart_day, LV_CHART_AXIS_PRIMARY_X, 0, 0, 24, 1, true, 50);
+      lv_chart_set_axis_tick(ui_sensor_chart_day, LV_CHART_AXIS_PRIMARY_X, 0, 0, DAY_MAX, 1, true, 50);
       // lv_chart_set_range(ui_sensor_chart_day, LV_CHART_AXIS_PRIMARY_X, 0, 200);
-      lv_chart_set_range(ui_sensor_chart_day, LV_CHART_AXIS_PRIMARY_Y, -200, 600); // modify
+      lv_chart_set_range(ui_sensor_chart_day, LV_CHART_AXIS_PRIMARY_Y, -day_left, day_right); // modify
 
-      lv_chart_set_div_line_count(ui_sensor_chart_day, 0, 24);
-      lv_chart_set_point_count(ui_sensor_chart_day, 24);
+      lv_chart_set_div_line_count(ui_sensor_chart_day, 0, DAY_MAX);
+      lv_chart_set_point_count(ui_sensor_chart_day, DAY_MAX);
 
       lv_obj_set_style_border_side(ui_sensor_chart_day, LV_BORDER_SIDE_RIGHT | LV_BORDER_SIDE_BOTTOM, 0);
 
