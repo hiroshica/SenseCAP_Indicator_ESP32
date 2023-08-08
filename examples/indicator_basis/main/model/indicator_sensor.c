@@ -293,9 +293,6 @@ static void __sensor_history_data_week_check(struct sensor_data_minmax p_data_we
         }
     }
 }
-
-
-
 static void __sensor_history_data_day_insert(struct sensor_data_average p_data_day[],  struct sensor_present_data  *p_cur,  time_t now)
 {
     int history_hour =0;
@@ -343,7 +340,6 @@ static void __sensor_history_data_day_insert(struct sensor_data_average p_data_d
 #endif
 
 }
-
 static void __sensor_history_data_week_insert(struct sensor_data_minmax p_data_week[],  struct sensor_present_data  *p_cur, time_t now)
 {
     int history_mday =0;
@@ -379,7 +375,6 @@ static void __sensor_history_data_week_insert(struct sensor_data_minmax p_data_w
         p_cur->day_max = 0.0;
         p_cur->day_min = 0.0;
         p_cur->per_day_cnt = 0;
-
     }  else {
         p_data_week[6].valid = false;
     }
@@ -393,6 +388,229 @@ static void __sensor_history_data_week_insert(struct sensor_data_minmax p_data_w
     }
 #endif
 }
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+static void __sensor_history_data_day_check_pa(struct sensor_data_average p_data_day[], const char *p_sensor_name, time_t now)
+{
+    //check history data day
+    int history_hour =0;
+    int cur_hour = 0;
+
+    history_hour =p_data_day[DAY_MAX-1].timestamp/SECOND_ADJUST;
+    cur_hour = now/SECOND_ADJUST;
+
+    //ESP_LOGI(TAG, "================ now Time [%02d:%02d] ========", history_hour, cur_hour);
+
+
+    for( int i =0;  i < DAY_MAX; i++) {
+        if( p_data_day[i].valid) {
+            ESP_LOGI(TAG, "%s index:%d, data:%.0f, time:%d", p_sensor_name, i, p_data_day[i].data, p_data_day[i].timestamp);
+        }
+    }
+
+    if( history_hour  >  cur_hour) {
+        ESP_LOGI(TAG, "%s History day data pull ahead, clear data", p_sensor_name);
+        memset(p_data_day, 0, sizeof(struct sensor_data_average)*DAY_MAX);
+        return;
+    }
+
+    for(int i =0; i < DAY_MAX-1; i++ ) {
+       int hour1 =p_data_day[i].timestamp/SECOND_ADJUST;
+       int hour2 =p_data_day[i+1].timestamp/SECOND_ADJUST;
+       if( (hour2-hour1) != 1) {
+            ESP_LOGI(TAG, "%s History day data error, clear data", p_sensor_name);
+            memset(p_data_day, 0, sizeof(struct sensor_data_average)*DAY_MAX);
+            return;
+       }
+    }
+
+    if( history_hour == cur_hour) {
+        ESP_LOGI(TAG, "%s History day data valid", p_sensor_name);
+        return;
+    }
+
+    if( history_hour < ( cur_hour -(DAY_MAX-1)) ) {
+        ESP_LOGI(TAG, "%s History day data expired, clear data!", p_sensor_name);
+        memset(p_data_day, 0, sizeof(struct sensor_data_average)*DAY_MAX);
+    } else {
+
+        int overlap_cnt = history_hour - ( cur_hour -(DAY_MAX-1))+1;
+
+        ESP_LOGI(TAG, "%s History day data  %d overlap !", p_sensor_name, overlap_cnt);
+
+        for(int i =0; i < DAY_MAX; i++ ) {
+            if( i < overlap_cnt) {
+                p_data_day[i].data = p_data_day[DAY_MAX-overlap_cnt+i].data;
+                p_data_day[i].valid = p_data_day[DAY_MAX-overlap_cnt+i].valid;
+                p_data_day[i].timestamp = p_data_day[DAY_MAX-overlap_cnt+i].timestamp;
+            } else {
+                p_data_day[i].data = 0;
+                p_data_day[i].valid = false;
+                p_data_day[i].timestamp = now - ((DAY_MAX-1) -i) * SECOND_ADJUST;;
+            }
+        }
+    }
+}
+static void __sensor_history_data_week_check_pa(struct sensor_data_minmax p_data_week[], const char *p_sensor_name, time_t now)
+{
+    //check history data week
+    int history_day =0;
+    int cur_day = 0;
+
+    history_day =p_data_week[6].timestamp/ (SECOND_ADJUST * DAY_MAX);
+    cur_day = now/ (SECOND_ADJUST * DAY_MAX);
+
+    for( int i =0;  i < 7; i++) {
+        if( p_data_week[i].valid) {
+            ESP_LOGI(TAG, "%s, index:%d, min:%.0f, max:%.0f, time:%d", p_sensor_name, i, p_data_week[i].min, p_data_week[i].max , p_data_week[i].timestamp);
+        }
+    }
+
+    if( history_day  >  cur_day){
+        ESP_LOGI(TAG, "%s History week data pull ahead, clear data", p_sensor_name);
+        memset(p_data_week, 0, sizeof(struct sensor_data_minmax)*7);
+        return;
+    }
+
+
+    for(int i =0; i < 6; i++ ) {
+       int  day1 =p_data_week[i].timestamp/ (SECOND_ADJUST * DAY_MAX);
+       int  day2 =p_data_week[i+1].timestamp/ (SECOND_ADJUST * DAY_MAX);
+       if( (day2-day1) != 1) {
+            ESP_LOGI(TAG, "%s History week data error, clear data", p_sensor_name);
+            memset(p_data_week, 0, sizeof(struct sensor_data_minmax)*7);
+            return;
+       }
+    }
+
+    if( history_day  == cur_day){
+        ESP_LOGI(TAG, "%s History week data valid", p_sensor_name);
+        return;
+    }
+
+    if( history_day < ( cur_day -6) ) {
+        ESP_LOGI(TAG, "%s History week data expired, clear data!", p_sensor_name);
+        memset(p_data_week, 0, sizeof(struct sensor_data_minmax)*7);
+
+    } else {
+
+        int overlap_cnt = history_day - ( cur_day -6)+1;
+
+        ESP_LOGI(TAG, "%s History week data , %d overlap!", p_sensor_name, overlap_cnt);
+
+        for(int i =0; i < 7; i++ ) {
+            if( i < overlap_cnt) {
+                p_data_week[i].max = p_data_week[7-overlap_cnt+i].max;
+                p_data_week[i].min = p_data_week[7-overlap_cnt+i].min;
+                p_data_week[i].timestamp = p_data_week[7-overlap_cnt+i].timestamp;
+                p_data_week[i].valid = p_data_week[7-overlap_cnt+i].valid;
+            } else {
+
+                p_data_week[i].max = 0;
+                p_data_week[i].min = 0;
+                p_data_week[i].timestamp = now - (6 -i) * (SECOND_ADJUST * DAY_MAX);
+                p_data_week[i].valid = false;
+            }
+        }
+    }
+}
+static void __sensor_history_data_day_insert_pa(struct sensor_data_average p_data_day[],  struct sensor_present_data  *p_cur,  time_t now)
+{
+    int history_hour =0;
+    int cur_hour = 0;
+    struct tm timeinfo;
+
+    localtime_r( &now, &timeinfo);
+    cur_hour = timeinfo.tm_hour;
+    
+    localtime_r( &(p_data_day[DAY_MAX-1].timestamp), &timeinfo);
+    history_hour = timeinfo.tm_hour;
+
+    ESP_LOGI(TAG, "================ insert PA:%02d:%02d ================" , timeinfo.tm_hour, timeinfo.tm_min);
+
+    if( cur_hour == history_hour) {
+        return;
+    }
+
+    for( int i =0;  i < DAY_MAX-1; i++) {
+        p_data_day[i].data = p_data_day[i+1].data;
+        p_data_day[i].valid = p_data_day[i+1].valid;
+        p_data_day[i].timestamp = p_data_day[i+1].timestamp;
+        
+        if( !p_data_day[i].valid) {
+            p_data_day[i].timestamp = now - (DAY_MAX-1 -i) * SECOND_ADJUST;
+        }
+    }
+    if( p_cur->per_hour_cnt >=1) {
+        p_data_day[DAY_MAX-1].valid = true;
+        p_data_day[DAY_MAX-1].data = p_cur->average;
+
+        //clear present data 
+        p_cur->per_hour_cnt = 0;
+        p_cur->sum = 0.0;
+
+    }  else {
+        p_data_day[DAY_MAX-1].valid = false;
+    }
+    p_data_day[DAY_MAX-1].timestamp = now;
+
+#if SENSOR_HISTORY_DATA_DEBUG
+    for( int i =0;  i < DAY_MAX; i++) {
+        if( p_data_day[i].valid) {
+            ESP_LOGI(TAG, "index:%d, data:%.0f, time:%d", i, p_data_day[i].data, p_data_day[i].timestamp);
+        }
+    }
+#endif
+
+}
+static void __sensor_history_data_week_insert_pa(struct sensor_data_minmax p_data_week[],  struct sensor_present_data  *p_cur, time_t now)
+{
+    int history_mday =0;
+    int cur_mday = 0;
+    struct tm timeinfo;
+
+    localtime_r( &now, &timeinfo);
+    cur_mday = timeinfo.tm_mday;
+    
+    localtime_r( &(p_data_week[6].timestamp), &timeinfo);
+    history_mday= timeinfo.tm_mday;
+
+    if( history_mday ==  cur_mday) {
+        return;
+    }
+
+    for( int i =0;  i < 6; i++) {
+        p_data_week[i].max = p_data_week[i+1].max;
+        p_data_week[i].min = p_data_week[i+1].min;
+        p_data_week[i].timestamp = p_data_week[i+1].timestamp;
+        p_data_week[i].valid = p_data_week[i+1].valid;
+
+        if( !p_data_week[i].valid) {
+            p_data_week[i].timestamp = now - (6 -i) * (SECOND_ADJUST * DAY_MAX);
+        }
+    }
+    if( p_cur->per_day_cnt >=1) {
+        p_data_week[6].valid = true;
+        p_data_week[6].max = p_cur->day_max;
+        p_data_week[6].min = p_cur->day_min;
+
+        //clear present data
+        p_cur->day_max = 0.0;
+        p_cur->day_min = 0.0;
+        p_cur->per_day_cnt = 0;
+    }  else {
+        p_data_week[6].valid = false;
+    }
+    p_data_week[6].timestamp = now;
+
+#if SENSOR_HISTORY_DATA_DEBUG
+    for( int i =0;  i < 7; i++) {
+        if( p_data_week[i].valid) {
+            ESP_LOGI(TAG, "index:%d, min:%.0f, max:%.0f, time:%d", i, p_data_week[i].min, p_data_week[i].max , p_data_week[i].timestamp);
+        }
+    }
+#endif
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 static void __sensor_history_data_check(time_t now)
@@ -417,11 +635,35 @@ static void __sensor_history_data_check(time_t now)
     __sensor_history_data_day_check(__g_sensor_history_data.tvoc.data_day,   "TVOC", now - SECOND_ADJUST);
     __sensor_history_data_week_check(__g_sensor_history_data.tvoc.data_week, "TVOC",  now - SECOND_ADJUST * DAY_MAX);
 
-    __sensor_history_data_day_check(__g_sensor_history_data.pa.data_day,   "Atmosphere", now - SECOND_ADJUST);
-    __sensor_history_data_week_check(__g_sensor_history_data.pa.data_week, "Atmosphere",  now - SECOND_ADJUST * DAY_MAX);
+    __sensor_history_data_day_check_pa(__g_sensor_history_data.pa.data_day,   "Atmosphere", now - SECOND_ADJUST);
+    __sensor_history_data_week_check_pa(__g_sensor_history_data.pa.data_week, "Atmosphere",  now - SECOND_ADJUST * DAY_MAX);
 
 
 
+    xSemaphoreGive(__g_data_mutex);
+}
+
+bool atomosphere_over10 = false;
+static void __check_atomosphere()
+{
+    struct sensor_data_average *p_data_day = __g_sensor_history_data.pa.data_day;
+    xSemaphoreTake(__g_data_mutex, portMAX_DELAY);
+    atomosphere_over10 = false;
+    for(int i =0; i < DAY_MAX-1; i++ ) {
+       //int hour1 =p_data_day[i].timestamp/SECOND_ADJUST;
+       //int hour2 =p_data_day[i+1].timestamp/SECOND_ADJUST;
+       //if( (hour2-hour1) == 1)
+       {
+            int elaped = abs((int)(p_data_day[i+1].data - p_data_day[i].data));
+            if(elaped >= 10 && elaped  < 1000){
+                atomosphere_over10 = true;
+                ESP_LOGI(TAG, "================ Histroy [%4d][ true] ================", elaped);
+            }
+            else{
+                ESP_LOGI(TAG, "================ Histroy [%4d][false] ================", elaped);
+            }
+       }
+    }
     xSemaphoreGive(__g_data_mutex);
 }
 
@@ -437,9 +679,11 @@ static void __sensor_history_data_day_update(time_t now)
 
     __sensor_history_data_day_insert( __g_sensor_history_data.tvoc.data_day, &__g_sensor_present_data.tvoc, now);
 
-    __sensor_history_data_day_insert( __g_sensor_history_data.pa.data_day, &__g_sensor_present_data.pa, now);
+    __sensor_history_data_day_insert_pa( __g_sensor_history_data.pa.data_day, &__g_sensor_present_data.pa, now);
 
     xSemaphoreGive(__g_data_mutex);
+
+    __check_atomosphere();
 
     __sensor_history_data_save();
 }
@@ -456,7 +700,7 @@ static void __sensor_history_data_week_update(time_t now)
     
     __sensor_history_data_week_insert(__g_sensor_history_data.tvoc.data_week, &__g_sensor_present_data.tvoc, now);
 
-    __sensor_history_data_week_insert(__g_sensor_history_data.pa.data_week, &__g_sensor_present_data.pa, now);
+    __sensor_history_data_week_insert_pa(__g_sensor_history_data.pa.data_week, &__g_sensor_present_data.pa, now);
 
     xSemaphoreGive(__g_data_mutex);
 
@@ -501,24 +745,33 @@ static void __sensor_history_data_update_callback(void* arg)
 
     // Hour change and the duration is greater than 1 hour (to prevent hour change during time zone synchronization) 
     // 小时变化并且 时长大于1h （防止在时区同步时, 小时变化的情况）
+    // SECOND_ADJUST分単位でupdateする
     if( cur_hour != last_hour  &&  ((now - last_timestamp1) > SECOND_ADJUST) ) {
         last_hour = cur_hour;
         
         if( last_timestamp1 == 0) {
             last_timestamp1 = ((now - SECOND_ADJUST)/SECOND_ADJUST) * SECOND_ADJUST;
         }
+        //localtime_r( &last_timestamp1, &timeinfo);
+        //strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
+        //ESP_LOGI(TAG, "================ in lasttimestamp1 %s ================", strftime_buf);
         
         struct updata_queue_msg msg = {
             .flag = 1,
             .time = last_timestamp1,
         };
 
+        //__check_atomosphere();
         xQueueSendFromISR(updata_queue_handle, &msg, NULL);
         //__sensor_history_data_day_update(last_timestamp1);
 
-        last_timestamp1 = ((now)/SECOND_ADJUST) * SECOND_ADJUST; // Sample at the hour
+        //last_timestamp1 = ((now)/SECOND_ADJUST) * SECOND_ADJUST; // Sample at the hour
+        //localtime_r( &last_timestamp1, &timeinfo);
+        //strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
+        //ESP_LOGI(TAG, "================ out lasttimestamp1 %s ================", strftime_buf);
     }
 
+    // week update check
     if( cur_day != last_day  &&  ((now - last_timestamp2) > (SECOND_ADJUST*DAY_MAX))) {
         last_day = cur_day;
         if( last_timestamp2 == 0) {
@@ -588,7 +841,7 @@ static void __sensor_history_data_restore(void)
     }
 }
 
-
+// data record
 static void __sensor_present_data_update(struct sensor_present_data *p_data, float vaule)
 {
     xSemaphoreTake(__g_data_mutex, portMAX_DELAY);
@@ -609,6 +862,31 @@ static void __sensor_present_data_update(struct sensor_present_data *p_data, flo
         p_data->day_min = vaule;
         p_data->day_max = vaule;
     }
+    xSemaphoreGive(__g_data_mutex);
+}
+// data record
+static void __sensor_present_data_update_pa(struct sensor_present_data *p_data, float vaule)
+{
+    xSemaphoreTake(__g_data_mutex, portMAX_DELAY);
+    p_data->per_hour_cnt++;
+    p_data->sum += vaule;
+    p_data->average = p_data->sum / p_data->per_hour_cnt;
+
+
+    p_data->per_day_cnt++;
+    if( p_data->per_day_cnt != 1) {
+        if( p_data->day_min > vaule) {
+            p_data->day_min = vaule;
+        }
+        if( p_data->day_max < vaule) {
+            p_data->day_max = vaule;
+        }
+    } else {
+        p_data->day_min = vaule;
+        p_data->day_max = vaule;
+    }
+    //ESP_LOGI(TAG, "================ update PA:%d(min:%d max:%d) ================" ,p_data->per_day_cnt, (int)p_data->day_min, (int)p_data->day_max);
+
     xSemaphoreGive(__g_data_mutex);
 }
 
@@ -684,7 +962,7 @@ static int __data_parse_handle(uint8_t *p_data, ssize_t len)
     
             data.sensor_type = SENSOR_DATA_PA;
             memcpy(&data.vaule, &p_data[1], sizeof(data.vaule));
-            __sensor_present_data_update(&__g_sensor_present_data.pa, data.vaule);
+            __sensor_present_data_update_pa(&__g_sensor_present_data.pa, data.vaule);
 
             esp_event_post_to(view_event_handle, VIEW_EVENT_BASE, VIEW_EVENT_SENSOR_DATA, \
                            &data, sizeof(struct view_data_sensor_data ), portMAX_DELAY);
