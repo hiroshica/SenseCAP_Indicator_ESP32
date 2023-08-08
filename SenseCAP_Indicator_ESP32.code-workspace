@@ -17,6 +17,9 @@
 			"IDF_CCACHE_ENABLE": "1",
 			"ESP_ROM_ELF_DIR": "C:\\Espressif\\tools\\esp-rom-elfs\\20220823/"
 		},
-		"idf.gitPathWin": "C:/Espressif/tools/idf-git/2.39.2/cmd/git.exe"
+		"idf.gitPathWin": "C:/Espressif/tools/idf-git/2.39.2/cmd/git.exe",
+		"files.associations": {
+			"file_serving_example_common.h": "c"
+		}
 	}
 }

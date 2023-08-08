@@ -1063,6 +1063,27 @@ static void __view_event_handler(void* handler_args, esp_event_base_t base, int3
                     snprintf(data_buf, sizeof(data_buf), "%d", (int)p_data->vaule);
                     ESP_LOGI(TAG, "update Atmosphere:%s", data_buf);
                     lv_label_set_text(ui_pa_data, data_buf);
+#if 0
+                    static int average_pa_data = 0;
+                    static bool average_update = false;
+                    static int calcaverage = 0;
+                    int old_avarage = average_pa_data;
+                    if(average_pa_data == 0){
+                        calcaverage = 0;
+                        average_pa_data =(int)p_data->vaule;
+                    }
+                    else{
+                        calcaverage = average_pa_data - (int)p_data->vaule;
+                        average_pa_data = (average_pa_data - (int)p_data->vaule) / 2;
+                    }
+                    if(calcaverage < -10 || calcaverage > 10){
+                        average_update = true;
+                    }
+                    else{
+                        average_update = true;
+                    }
+                    ESP_LOGI(TAG, "===== update Atmosphere:%d:%d:%s",old_avarage, average_pa_data, average_update ? "true" : "false");
+#endif
                     break;
                 }
             default:

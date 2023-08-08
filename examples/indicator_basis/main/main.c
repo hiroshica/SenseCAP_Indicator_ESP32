@@ -28,6 +28,7 @@ static const char *TAG = "app_main";
 ESP_EVENT_DEFINE_BASE(VIEW_EVENT_BASE);
 esp_event_loop_handle_t view_event_handle;
 
+const char* base_path = "/data";
 
 void app_main(void)
 {
@@ -35,6 +36,7 @@ void app_main(void)
 
     ESP_ERROR_CHECK(bsp_board_init());
     lv_port_init();
+
 
 
     esp_event_loop_args_t view_event_task_args = {
@@ -54,6 +56,7 @@ void app_main(void)
 
     indicator_model_init();
     indicator_controller_init();
+    //ESP_ERROR_CHECK(example_mount_storage(base_path));
 
     static char buffer[128];    /* Make sure buffer is enough for `sprintf` */
     while (1) {
