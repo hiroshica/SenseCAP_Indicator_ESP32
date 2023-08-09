@@ -651,6 +651,8 @@ static void __sensor_history_data_check(time_t now)
 }
 
 bool atmosphere_over10 = false;
+struct sensor_data_average *atmosphere_over10_data[2];
+
 static void __check_atmosphere(int previndex, int curindex)
 {
     xSemaphoreTake(__g_data_mutex, portMAX_DELAY);
@@ -659,6 +661,8 @@ static void __check_atmosphere(int previndex, int curindex)
     struct sensor_data_average *prev_data_day = NULL;
     struct sensor_data_average *cur_data_day = NULL;
     atmosphere_over10 = false;
+    atmosphere_over10_data[0] = NULL;
+    atmosphere_over10_data[1] = NULL;
     bool errflag = false;
     struct tm timeinfo = { 0 };
 
@@ -698,10 +702,13 @@ static void __check_atmosphere(int previndex, int curindex)
         int elaped = abs((int)(prev_data_day->data - cur_data_day->data));
         if(elaped >= 10 && elaped  < 1000){
             atmosphere_over10 = true;
+            atmosphere_over10_data[0] = prev_data_day;
+            atmosphere_over10_data[1] = cur_data_day;
             ESP_LOGI(TAG, "================ Histroy [%4d][ true] ================", elaped);
         }
         else{
             ESP_LOGI(TAG, "================ Histroy [%4d][false] ================", elaped);
+            esp_event_post_to(view_event_handle, VIEW_EVENT_BASE, VIEW_EVENT_SENDMAIL, NULL, 0, portMAX_DELAY);
         }
     }
     else{
@@ -1204,6 +1211,11 @@ static void __view_event_handler(void* handler_args, esp_event_base_t base, int3
             __sensor_shutdown();
             break;
         }
+        case VIEW_EVENT_SENDMAIL: {
+            ESP_LOGI(TAG, "event: VIEW_EVENT_SENDMAIL");
+            //__sensor_shutdown();
+            break;
+        }
 //debug ui 
 #if 0
         case VIEW_EVENT_SENSOR_TEMP_HISTORY: {
@@ -1440,6 +1452,9 @@ int indicator_sensor_init(void)
                                                             __view_event_handler, NULL, NULL));
     ESP_ERROR_CHECK(esp_event_handler_instance_register_with(view_event_handle, 
                                                             VIEW_EVENT_BASE, VIEW_EVENT_SHUTDOWN, 
+                                                            __view_event_handler, NULL, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_instance_register_with(view_event_handle, 
+                                                            VIEW_EVENT_BASE, VIEW_EVENT_SENDMAIL, 
                                                             __view_event_handler, NULL, NULL));
 }
 

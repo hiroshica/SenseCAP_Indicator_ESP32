@@ -171,6 +171,8 @@ enum {
     VIEW_EVENT_FACTORY_RESET, //NULL
     VIEW_EVENT_SCREEN_CTRL,   // bool  0:disable , 1:enable
 
+    VIEW_EVENT_SENDMAIL,
+
     VIEW_EVENT_ALL,
 };
 

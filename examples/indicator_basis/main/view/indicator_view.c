@@ -7,11 +7,12 @@
 
 #include "esp_wifi.h"
 #include <time.h>
-
-
-
+//#include "view_data.h"
 
 static const char *TAG = "view";
+
+extern bool atmosphere_over10;
+extern struct sensor_data_average *atmosphere_over10_data[2];
 
 /*****************************************************************/
 // sensor chart

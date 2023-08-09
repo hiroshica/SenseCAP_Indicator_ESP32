@@ -436,6 +436,12 @@ static void __view_event_handler(void* handler_args, esp_event_base_t base, int3
             __wifi_shutdown();
             break;
         }
+        case VIEW_EVENT_SENDMAIL: {
+            ESP_LOGI(TAG, "event: VIEW_EVENT_SENDMAIL");
+            //__sensor_shutdown();
+            break;
+        }
+
     default:
         break;
     }
@@ -495,6 +501,10 @@ int indicator_wifi_init(void)
 
     ESP_ERROR_CHECK(esp_event_handler_instance_register_with(view_event_handle, 
                                                             VIEW_EVENT_BASE, VIEW_EVENT_SHUTDOWN, 
+                                                            __view_event_handler, NULL, NULL));
+
+    ESP_ERROR_CHECK(esp_event_handler_instance_register_with(view_event_handle, 
+                                                            VIEW_EVENT_BASE, VIEW_EVENT_SENDMAIL, 
                                                             __view_event_handler, NULL, NULL));
 
     wifi_config_t wifi_cfg;
