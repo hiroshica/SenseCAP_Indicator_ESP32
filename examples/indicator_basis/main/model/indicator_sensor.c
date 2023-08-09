@@ -300,10 +300,14 @@ static void __sensor_history_data_day_insert(struct sensor_data_average p_data_d
     struct tm timeinfo;
 
     localtime_r( &now, &timeinfo);
-    cur_hour = timeinfo.tm_hour;
+    //cur_hour = timeinfo.tm_hour;
+    cur_hour = (((timeinfo.tm_hour * 60) + timeinfo.tm_min) * 60) / SECOND_ADJUST;
     
-    localtime_r( &(p_data_day[DAY_MAX-1].timestamp), &timeinfo);
-    history_hour = timeinfo.tm_hour;
+    if(p_data_day[DAY_MAX-1].valid){
+        localtime_r( &(p_data_day[DAY_MAX-1].timestamp), &timeinfo);
+        //history_hour = timeinfo.tm_hour;
+        history_hour = (((timeinfo.tm_hour * 60) + timeinfo.tm_min) * 60) / SECOND_ADJUST;
+    }
 
     if( cur_hour == history_hour) {
         return;
@@ -520,12 +524,17 @@ static void __sensor_history_data_day_insert_pa(struct sensor_data_average p_dat
     struct tm timeinfo;
 
     localtime_r( &now, &timeinfo);
-    cur_hour = timeinfo.tm_hour;
+    //cur_hour = timeinfo.tm_hour;
+    cur_hour = (((timeinfo.tm_hour * 60) + timeinfo.tm_min) * 60) / SECOND_ADJUST;
     
-    localtime_r( &(p_data_day[DAY_MAX-1].timestamp), &timeinfo);
-    history_hour = timeinfo.tm_hour;
+    if(p_data_day[DAY_MAX-1].valid){
+        localtime_r( &(p_data_day[DAY_MAX-1].timestamp), &timeinfo);
+        //history_hour = timeinfo.tm_hour;
+        history_hour = (((timeinfo.tm_hour * 60) + timeinfo.tm_min) * 60) / SECOND_ADJUST;
+    }
 
-    ESP_LOGI(TAG, "================ insert PA:%02d:%02d ================" , timeinfo.tm_hour, timeinfo.tm_min);
+
+    ESP_LOGI(TAG, "================ insert PA:[h:%d::c:%d] [%02d:%02d] ================" , history_hour,cur_hour, timeinfo.tm_hour, timeinfo.tm_min);
 
     if( cur_hour == history_hour) {
         return;
@@ -537,7 +546,7 @@ static void __sensor_history_data_day_insert_pa(struct sensor_data_average p_dat
         p_data_day[i].timestamp = p_data_day[i+1].timestamp;
         
         if( !p_data_day[i].valid) {
-            p_data_day[i].timestamp = now - (DAY_MAX-1 -i) * SECOND_ADJUST;
+            p_data_day[i].timestamp = now - (((DAY_MAX-1) - i) * SECOND_ADJUST);
         }
     }
     if( p_cur->per_hour_cnt >=1) {
@@ -650,34 +659,41 @@ static void __check_atmosphere(int previndex, int curindex)
     struct sensor_data_average *prev_data_day = NULL;
     struct sensor_data_average *cur_data_day = NULL;
     atmosphere_over10 = false;
-    bool checkflag = true;
+    bool errflag = false;
     struct tm timeinfo = { 0 };
+
+    ESP_LOGI(TAG, "================ Histroy index[%d:%d] ================", previndex,curindex);
+
     for( int iI =0;  iI < DAY_MAX; iI++)
     {
         if(p_data_day[iI].valid){
            localtime_r( &p_data_day[iI].timestamp, &timeinfo);
            int calc_hour = (((timeinfo.tm_hour * 60) + timeinfo.tm_min) * 60) / SECOND_ADJUST;
            if(calc_hour == previndex){
+                ESP_LOGI(TAG, "================ Histroy prev get [%d] ================", iI);
                 prev_data_day = &p_data_day[iI];
+                continue;
            }
-           else if(calc_hour == curindex){
+           if(calc_hour == curindex){
+                ESP_LOGI(TAG, "================ Histroy cur  get [%d] ================", iI);
                 cur_data_day = &p_data_day[iI];
+                continue;
            }
         }
     }
-    ESP_LOGI(TAG, "================ Histroy index[%d:%d] ================", previndex,curindex);
 
     if(prev_data_day == NULL)
     {
         ESP_LOGI(TAG, "================ Prev Histroy Data Error!!! [%d] ================", previndex);
-        checkflag = true;
+        errflag = true;
     }
     if(cur_data_day == NULL)
     {
         ESP_LOGI(TAG, "================ Cur  Histroy Data Error!!! [%d] ================", curindex);
-        checkflag = true;
+        errflag = true;
     }
-    if(!checkflag)
+
+    if(!errflag)
     {
         int elaped = abs((int)(prev_data_day->data - cur_data_day->data));
         if(elaped >= 10 && elaped  < 1000){
