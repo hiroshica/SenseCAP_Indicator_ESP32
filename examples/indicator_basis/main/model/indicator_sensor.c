@@ -7,7 +7,7 @@
 #include "time.h"
 #include "history.h"
 
-#define SENSOR_HISTORY_DATA_DEBUG  1
+#define SENSOR_HISTORY_DATA_DEBUG  0
 #define SENSOR_COMM_DEBUG    0
 
 
@@ -638,32 +638,70 @@ static void __sensor_history_data_check(time_t now)
     __sensor_history_data_day_check_pa(__g_sensor_history_data.pa.data_day,   "Atmosphere", now - SECOND_ADJUST);
     __sensor_history_data_week_check_pa(__g_sensor_history_data.pa.data_week, "Atmosphere",  now - SECOND_ADJUST * DAY_MAX);
 
-
-
     xSemaphoreGive(__g_data_mutex);
 }
 
-bool atomosphere_over10 = false;
-static void __check_atomosphere()
+bool atmosphere_over10 = false;
+static void __check_atmosphere(int previndex, int curindex)
 {
-    struct sensor_data_average *p_data_day = __g_sensor_history_data.pa.data_day;
     xSemaphoreTake(__g_data_mutex, portMAX_DELAY);
-    atomosphere_over10 = false;
-    for(int i =0; i < DAY_MAX-1; i++ ) {
-       //int hour1 =p_data_day[i].timestamp/SECOND_ADJUST;
-       //int hour2 =p_data_day[i+1].timestamp/SECOND_ADJUST;
-       //if( (hour2-hour1) == 1)
-       {
-            int elaped = abs((int)(p_data_day[i+1].data - p_data_day[i].data));
-            if(elaped >= 10 && elaped  < 1000){
-                atomosphere_over10 = true;
-                ESP_LOGI(TAG, "================ Histroy [%4d][ true] ================", elaped);
+
+    struct sensor_data_average *p_data_day = __g_sensor_history_data.pa.data_day;
+    struct sensor_data_average *prev_data_day = NULL;
+    struct sensor_data_average *cur_data_day = NULL;
+    atmosphere_over10 = false;
+    bool checkflag = true;
+    struct tm timeinfo = { 0 };
+    for( int iI =0;  iI < DAY_MAX; iI++)
+    {
+        if(p_data_day[iI].valid){
+           localtime_r( &p_data_day[iI].timestamp, &timeinfo);
+           int calc_hour = (((timeinfo.tm_hour * 60) + timeinfo.tm_min) * 60) / SECOND_ADJUST;
+           if(calc_hour == previndex){
+                prev_data_day = &p_data_day[iI];
+           }
+           else if(calc_hour == curindex){
+                cur_data_day = &p_data_day[iI];
+           }
+        }
+    }
+    ESP_LOGI(TAG, "================ Histroy index[%d:%d] ================", previndex,curindex);
+
+    if(prev_data_day == NULL)
+    {
+        ESP_LOGI(TAG, "================ Prev Histroy Data Error!!! [%d] ================", previndex);
+        checkflag = true;
+    }
+    if(cur_data_day == NULL)
+    {
+        ESP_LOGI(TAG, "================ Cur  Histroy Data Error!!! [%d] ================", curindex);
+        checkflag = true;
+    }
+    if(!checkflag)
+    {
+        int elaped = abs((int)(prev_data_day->data - cur_data_day->data));
+        if(elaped >= 10 && elaped  < 1000){
+            atmosphere_over10 = true;
+            ESP_LOGI(TAG, "================ Histroy [%4d][ true] ================", elaped);
+        }
+        else{
+            ESP_LOGI(TAG, "================ Histroy [%4d][false] ================", elaped);
+        }
+    }
+    else{
+        for( int iI =0;  iI < DAY_MAX; iI++)
+        {
+            if(p_data_day[iI].valid){
+                localtime_r( &p_data_day[iI].timestamp, &timeinfo);
+                int calc_hour = (((timeinfo.tm_hour * 60) + timeinfo.tm_min) * 60) / SECOND_ADJUST;
+                ESP_LOGI(TAG, "================ Histroy dump[%3d][%d:%4d] ================", iI, calc_hour, (int)p_data_day[iI].data);
             }
             else{
-                ESP_LOGI(TAG, "================ Histroy [%4d][false] ================", elaped);
+                ESP_LOGI(TAG, "================ Histroy dump[%3d] not data ================", iI);
             }
-       }
+        }
     }
+
     xSemaphoreGive(__g_data_mutex);
 }
 
@@ -683,7 +721,15 @@ static void __sensor_history_data_day_update(time_t now)
 
     xSemaphoreGive(__g_data_mutex);
 
-    __check_atomosphere();
+    struct tm timeinfo = { 0 };
+    localtime_r( &now, &timeinfo);
+    int cur_hour = (((timeinfo.tm_hour * 60) + timeinfo.tm_min) * 60) / SECOND_ADJUST;
+    int previndex =  cur_hour-1;
+    if(previndex < 0){
+        previndex = DAY_MAX -1;
+    }
+    __check_atmosphere(previndex,cur_hour);
+
 
     __sensor_history_data_save();
 }
@@ -708,7 +754,7 @@ static void __sensor_history_data_week_update(time_t now)
 
 }
 
-
+static int dummy_loop = 2;      // 時間取得が割るまでのダミーループ
 static void __sensor_history_data_update_callback(void* arg)
 {
     static int last_hour = DAY_MAX+1;
@@ -730,10 +776,11 @@ static void __sensor_history_data_update_callback(void* arg)
     char strftime_buf[64];
     strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
 
-    int cur_hour = timeinfo.tm_hour;
+    //int cur_hour = timeinfo.tm_hour;
+    int cur_hour = (((timeinfo.tm_hour * 60) + timeinfo.tm_min) * 60) / SECOND_ADJUST;
     int cur_day  = timeinfo.tm_mday;
 
-    ESP_LOGI(TAG, "__sensor_history_data_update_callback: %s", strftime_buf);
+    ESP_LOGI(TAG, "__sensor_history_data_update_callback: %s[%d:%d][%02d:%02d]", strftime_buf, cur_hour, last_hour, timeinfo.tm_hour,timeinfo.tm_min);
 
     //if greater than 2020 year mean time is right 
     if( timeinfo.tm_year  < 120) { 
@@ -743,37 +790,39 @@ static void __sensor_history_data_update_callback(void* arg)
 
     __sensor_history_data_check( now);
 
+    if(dummy_loop != 0){
+        dummy_loop--;
+        return;
+    }
+
     // Hour change and the duration is greater than 1 hour (to prevent hour change during time zone synchronization) 
     // 小时变化并且 时长大于1h （防止在时区同步时, 小时变化的情况）
     // SECOND_ADJUST分単位でupdateする
     if( cur_hour != last_hour  &&  ((now - last_timestamp1) > SECOND_ADJUST) ) {
+
         last_hour = cur_hour;
         
         if( last_timestamp1 == 0) {
             last_timestamp1 = ((now - SECOND_ADJUST)/SECOND_ADJUST) * SECOND_ADJUST;
         }
-        //localtime_r( &last_timestamp1, &timeinfo);
-        //strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
-        //ESP_LOGI(TAG, "================ in lasttimestamp1 %s ================", strftime_buf);
-        
+        ESP_LOGI(TAG, "__sensor_history_data_update_callback: day update [lasttimestamp1:%d] ", last_timestamp1);
+       
         struct updata_queue_msg msg = {
             .flag = 1,
             .time = last_timestamp1,
         };
 
-        //__check_atomosphere();
         xQueueSendFromISR(updata_queue_handle, &msg, NULL);
         //__sensor_history_data_day_update(last_timestamp1);
 
-        //last_timestamp1 = ((now)/SECOND_ADJUST) * SECOND_ADJUST; // Sample at the hour
-        //localtime_r( &last_timestamp1, &timeinfo);
-        //strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
-        //ESP_LOGI(TAG, "================ out lasttimestamp1 %s ================", strftime_buf);
+        last_timestamp1 = ((now)/SECOND_ADJUST) * SECOND_ADJUST; // Sample at the hour        
     }
 
     // week update check
     if( cur_day != last_day  &&  ((now - last_timestamp2) > (SECOND_ADJUST*DAY_MAX))) {
         last_day = cur_day;
+        ESP_LOGI(TAG, "__sensor_history_data_update_callback: week update [lasttimestamp2:%d] ", last_timestamp2);
+
         if( last_timestamp2 == 0) {
             last_timestamp2 = ((now - SECOND_ADJUST * DAY_MAX) / (SECOND_ADJUST * DAY_MAX)) * (SECOND_ADJUST * DAY_MAX);
         }
@@ -1348,7 +1397,7 @@ int indicator_sensor_init(void)
 {
     __g_data_mutex  =  xSemaphoreCreateMutex();
 
-    updata_queue_handle = xQueueCreate(4, sizeof( struct updata_queue_msg));
+    updata_queue_handle = xQueueCreate(5*2, sizeof( struct updata_queue_msg));
 
     __sensor_history_data_restore();
     
