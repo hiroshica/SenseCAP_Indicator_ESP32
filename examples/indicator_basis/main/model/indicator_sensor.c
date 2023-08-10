@@ -705,12 +705,14 @@ static void __check_atmosphere(int previndex, int curindex)
             atmosphere_over10_data[0] = prev_data_day;
             atmosphere_over10_data[1] = cur_data_day;
             ESP_LOGI(TAG, "================ Histroy [%4d][ true] ================", elaped);
+            esp_event_post_to(view_event_handle, VIEW_EVENT_BASE, VIEW_EVENT_SENDMAIL, NULL, 0, portMAX_DELAY);
         }
         else{
             ESP_LOGI(TAG, "================ Histroy [%4d][false] ================", elaped);
-            esp_event_post_to(view_event_handle, VIEW_EVENT_BASE, VIEW_EVENT_SENDMAIL, NULL, 0, portMAX_DELAY);
+            //esp_event_post_to(view_event_handle, VIEW_EVENT_BASE, VIEW_EVENT_SENDMAIL, NULL, 0, portMAX_DELAY);
         }
     }
+#if 0
     else{
         for( int iI =0;  iI < DAY_MAX; iI++)
         {
@@ -724,6 +726,7 @@ static void __check_atmosphere(int previndex, int curindex)
             }
         }
     }
+#endif
 
     xSemaphoreGive(__g_data_mutex);
 }
@@ -1211,11 +1214,13 @@ static void __view_event_handler(void* handler_args, esp_event_base_t base, int3
             __sensor_shutdown();
             break;
         }
+#if 0
         case VIEW_EVENT_SENDMAIL: {
             ESP_LOGI(TAG, "event: VIEW_EVENT_SENDMAIL");
             //__sensor_shutdown();
             break;
         }
+#endif
 //debug ui 
 #if 0
         case VIEW_EVENT_SENSOR_TEMP_HISTORY: {
@@ -1453,8 +1458,10 @@ int indicator_sensor_init(void)
     ESP_ERROR_CHECK(esp_event_handler_instance_register_with(view_event_handle, 
                                                             VIEW_EVENT_BASE, VIEW_EVENT_SHUTDOWN, 
                                                             __view_event_handler, NULL, NULL));
+#if 0
     ESP_ERROR_CHECK(esp_event_handler_instance_register_with(view_event_handle, 
                                                             VIEW_EVENT_BASE, VIEW_EVENT_SENDMAIL, 
                                                             __view_event_handler, NULL, NULL));
+#endif
 }
 
