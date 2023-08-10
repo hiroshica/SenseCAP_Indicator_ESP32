@@ -6,46 +6,12 @@
 #include<stdlib.h>
 #include "time.h"
 #include "history.h"
+#include "ESP32_RP2040_Comm.h"
 
 #define SENSOR_HISTORY_DATA_DEBUG  0
-#define SENSOR_COMM_DEBUG    0
 
-
-#define ESP32_RP2040_TXD (19)
-#define ESP32_RP2040_RXD (20)
-#define ESP32_RP2040_RTS (UART_PIN_NO_CHANGE)
-#define ESP32_RP2040_CTS (UART_PIN_NO_CHANGE)
-
-#define ESP32_COMM_PORT_NUM      (2)
-#define ESP32_COMM_BAUD_RATE     (115200)
-#define ESP32_RP2040_COMM_TASK_STACK_SIZE    (1024*4)
-#define BUF_SIZE (512)
-
-uint8_t buf[BUF_SIZE];   //recv 
-uint8_t data[BUF_SIZE];  //decode
-
-enum  pkt_type {
-
-    PKT_TYPE_CMD_COLLECT_INTERVAL = 0xA0, //uin32_t 
-    PKT_TYPE_CMD_BEEP_ON  = 0xA1,  //uin32_t  ms: on time 
-    PKT_TYPE_CMD_BEEP_OFF = 0xA2,
-    PKT_TYPE_CMD_SHUTDOWN = 0xA3, //uin32_t 
-    PKT_TYPE_CMD_POWER_ON = 0xA4,
-
-    PKT_TYPE_SENSOR_SCD41_TEMP  = 0xB0, // float
-    PKT_TYPE_SENSOR_SCD41_HUMIDITY = 0xB1, // float
-    PKT_TYPE_SENSOR_SCD41_CO2 = 0xB2, // float
-
-    PKT_TYPE_SENSOR_SHT41_TEMP = 0xB3, // float
-    PKT_TYPE_SENSOR_SHT41_HUMIDITY = 0xB4, // float
-
-    PKT_TYPE_SENSOR_TVOC_INDEX = 0xB5, // float
-
-    PKT_TYPE_SENSOR_DPS310_PA = 0xB6, // float
-
-    //todo
-};
-
+uint8_t erc_buf[BUF_SIZE];   //recv 
+uint8_t erc_data[BUF_SIZE];  //decode
 
 struct sensor_present_data
 {
@@ -95,6 +61,8 @@ struct updata_queue_msg
 static const char *TAG = "sensor-model";
 
 static SemaphoreHandle_t       __g_data_mutex;
+
+static int __cmd_send(uint8_t cmd, void *p_data, uint8_t len);
 
 static struct indicator_sensor_history_data  __g_sensor_history_data;
 static struct indicator_sensor_present_data  __g_sensor_present_data;
@@ -667,6 +635,7 @@ static void __check_atmosphere(int previndex, int curindex)
     struct tm timeinfo = { 0 };
 
     ESP_LOGI(TAG, "================ Histroy index[%d:%d] ================", previndex,curindex);
+    //__cmd_send(PKT_TYPE_CMD_BEEP_ON, NULL, 0);
 
     for( int iI =0;  iI < DAY_MAX; iI++)
     {
@@ -705,7 +674,8 @@ static void __check_atmosphere(int previndex, int curindex)
             atmosphere_over10_data[0] = prev_data_day;
             atmosphere_over10_data[1] = cur_data_day;
             ESP_LOGI(TAG, "================ Histroy [%4d][ true] ================", elaped);
-            esp_event_post_to(view_event_handle, VIEW_EVENT_BASE, VIEW_EVENT_SENDMAIL, NULL, 0, portMAX_DELAY);
+            //esp_event_post_to(view_event_handle, VIEW_EVENT_BASE, VIEW_EVENT_SENDMAIL, NULL, 0, portMAX_DELAY);
+            __cmd_send(PKT_TYPE_CMD_BEEP_ON, NULL, 0);
         }
         else{
             ESP_LOGI(TAG, "================ Histroy [%4d][false] ================", elaped);
@@ -1102,44 +1072,44 @@ static void esp32_rp2040_comm_task(void *arg)
     cobs_decode_result ret;
     
     while (1) {
-        int len = uart_read_bytes(ESP32_COMM_PORT_NUM, buf, (BUF_SIZE - 1), 1 / portTICK_PERIOD_MS);
+        int len = uart_read_bytes(ESP32_COMM_PORT_NUM, erc_buf, (BUF_SIZE - 1), 1 / portTICK_PERIOD_MS);
 #if SENSOR_COMM_DEBUG
         ESP_LOGI(TAG, "len:%d",  len);
 #endif 
         int index  = 0;
-        uint8_t *p_buf_start =  buf;
-        uint8_t *p_buf_end = buf;
+        uint8_t *p_buf_start =  erc_buf;
+        uint8_t *p_buf_end = erc_buf;
         if( len > 0 ) {
 
 #if SENSOR_COMM_DEBUG
             printf("recv:  ");
             for(int i=0; i < len; i++ ) {
-                printf( "0x%x ", buf[i] );
+                printf( "0x%x ", erc_buf[i] );
             }
             printf("\r\n");
 #endif 
-            while ( p_buf_start < (buf + len)) {
+            while ( p_buf_start < (erc_buf + len)) {
                 uint8_t *p_buf_end = p_buf_start;
-                while( p_buf_end < (buf + len) ) {
+                while( p_buf_end < (erc_buf + len) ) {
                     if( *p_buf_end == 0x00) {
                         break;
                     }
                     p_buf_end++;
                 }
                 // decode buf 
-                memset(data, 0, sizeof(data));
-                ret = cobs_decode(data, sizeof(data),  p_buf_start, p_buf_end - p_buf_start);
+                memset(erc_data, 0, sizeof(erc_data));
+                ret = cobs_decode(erc_data, sizeof(erc_data),  p_buf_start, p_buf_end - p_buf_start);
 
 #if SENSOR_COMM_DEBUG
-                ESP_LOGI(TAG, "decode status:%d, len:%d, type:0x%x  ",  ret.status,  ret.out_len, data[0]);
+                ESP_LOGI(TAG, "decode status:%d, len:%d, type:0x%x  ",  ret.status,  ret.out_len, erc_data[0]);
                 printf("decode: ");
                 for(int i=0; i < ret.out_len; i++ ) {
-                    printf( "0x%x ", data[i] );
+                    printf( "0x%x ", erc_data[i] );
                 }
                 printf("\r\n");
 #endif 
                 if( ret.out_len > 1  &&  ret.status == COBS_DECODE_OK ) { //todo  ret.status
-                    __data_parse_handle((uint8_t *)data, ret.out_len);
+                    __data_parse_handle((uint8_t *)erc_data, ret.out_len);
                 }
 
                 p_buf_start = p_buf_end + 1; // next message

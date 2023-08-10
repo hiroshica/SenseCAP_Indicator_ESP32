@@ -19,7 +19,10 @@
 		},
 		"idf.gitPathWin": "C:/Espressif/tools/idf-git/2.39.2/cmd/git.exe",
 		"files.associations": {
-			"file_serving_example_common.h": "c"
+			"file_serving_example_common.h": "c",
+			"array": "c",
+			"string": "c",
+			"string_view": "c"
 		}
 	}
 }
