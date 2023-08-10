@@ -12,7 +12,6 @@
 #include "lwip/sockets.h"
 #include "esp_event.h"
 #include "ping/ping_sock.h"
-#include "file_serving_example_common.h"
 
 
 #define WIFI_CONNECTED_BIT BIT0
@@ -42,10 +41,6 @@ static EventGroupHandle_t __wifi_event_group;
 static const char *TAG = "wifi-model";
 
 static int min(int a, int b) { return (a < b) ? a : b; }
-
-//static void StartServer();
-//static void StopServer();
-
 
 static void __wifi_st_set( struct view_data_wifi_st *p_st )
 {
@@ -149,8 +144,6 @@ static void __ip_event_handler(void* arg, esp_event_base_t event_base,
         __wifi_st_set(&st);
         //xEventGroupSetBits(__wifi_event_group, WIFI_CONNECTED_BIT);
         xSemaphoreGive(__g_net_check_sem);  //goto check network
-        //StartServer();
-       
     }
 }
 
@@ -231,8 +224,6 @@ static void __wifi_cfg_restore(void)
 static void __wifi_shutdown(void) 
 {
     _g_wifi_model.is_cfg = false;  //disable reconnect
-
-    //StopServer();
 
     struct view_data_wifi_st st = {0};
     st.is_connected = false;
@@ -524,15 +515,3 @@ int indicator_wifi_init(void)
     return 0;
 }
 
-#if 0
-extern const char* base_path;
-
-static void StartServer(){
-    /* Start the file server */
-    ESP_ERROR_CHECK(example_start_file_server(base_path));
-    ESP_LOGI(TAG, "File server started");
-}
-static void StopServer(){
-    stop_webserver();    
-}
-#endif
