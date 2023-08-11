@@ -28,7 +28,7 @@ struct sensor_present_data
 struct sensor_history_data
 {
     struct sensor_data_average data_day[DAY_MAX];
-    struct sensor_data_minmax data_week[7];
+    struct sensor_data_minmax data_week[WEEK_MAX];
 };
 
 struct indicator_sensor_present_data
@@ -618,23 +618,30 @@ static void __sensor_history_data_check(time_t now)
     xSemaphoreGive(__g_data_mutex);
 }
 
+struct atmosphere_record
+{
+    struct sensor_data_average *atmosphere_over10_now;
+    struct sensor_data_minmax *atmosphere_over10_week;
+};
 bool atmosphere_over10 = false;
-struct sensor_data_average *atmosphere_over10_data[2];
+struct atmosphere_record atmosphere_record_data;
 
-static void __check_atmosphere(int previndex, int curindex)
+
+static void __check_atmosphere(int prev_mday, int cur_hour, int cur_mday)
 {
     xSemaphoreTake(__g_data_mutex, portMAX_DELAY);
 
     struct sensor_data_average *p_data_day = __g_sensor_history_data.pa.data_day;
-    struct sensor_data_average *prev_data_day = NULL;
+    struct sensor_data_minmax *p_data_week = __g_sensor_history_data.pa.data_week;
     struct sensor_data_average *cur_data_day = NULL;
+    struct sensor_data_minmax *prev_data_day_av = NULL;
     atmosphere_over10 = false;
-    atmosphere_over10_data[0] = NULL;
-    atmosphere_over10_data[1] = NULL;
+    atmosphere_record_data.atmosphere_over10_now = NULL;
+    atmosphere_record_data.atmosphere_over10_week = NULL;
     bool errflag = false;
     struct tm timeinfo = { 0 };
 
-    ESP_LOGI(TAG, "================ Histroy index[%d:%d] ================", previndex,curindex);
+    ESP_LOGI(TAG, "================ Histroy index[%d:%d][%d] ================", prev_mday, cur_mday, cur_hour);
     //__cmd_send(PKT_TYPE_CMD_BEEP_ON, NULL, 0);
 
     for( int iI =0;  iI < DAY_MAX; iI++)
@@ -642,43 +649,47 @@ static void __check_atmosphere(int previndex, int curindex)
         if(p_data_day[iI].valid){
            localtime_r( &p_data_day[iI].timestamp, &timeinfo);
            int calc_hour = (((timeinfo.tm_hour * 60) + timeinfo.tm_min) * 60) / SECOND_ADJUST;
-           if(calc_hour == previndex){
-                ESP_LOGI(TAG, "================ Histroy prev get [%d] ================", iI);
-                prev_data_day = &p_data_day[iI];
-                continue;
-           }
-           if(calc_hour == curindex){
-                ESP_LOGI(TAG, "================ Histroy cur  get [%d] ================", iI);
+           if(calc_hour == cur_hour){
+                ESP_LOGI(TAG, "================ Histroy cur get [%d:%d] ================", iI, cur_hour);
                 cur_data_day = &p_data_day[iI];
                 continue;
            }
         }
     }
-
-    if(prev_data_day == NULL)
-    {
-        ESP_LOGI(TAG, "================ Prev Histroy Data Error!!! [%d] ================", previndex);
-        errflag = true;
+    for( int iI =0;  iI < WEEK_MAX; iI++){
+        if(p_data_week[iI].valid){
+            localtime_r( &(p_data_week[iI].timestamp), &timeinfo);
+            if(timeinfo.tm_mday == prev_mday){
+                prev_data_day_av = &p_data_week[iI];
+                ESP_LOGI(TAG, "================ Histroy prev mday get [%d:%d] ================", iI,prev_mday);
+            }
+        }
     }
+
     if(cur_data_day == NULL)
     {
-        ESP_LOGI(TAG, "================ Cur  Histroy Data Error!!! [%d] ================", curindex);
+        ESP_LOGI(TAG, "================ Cur       Histroy Data Error!!! [%d] ================", cur_hour);
+        errflag = true;
+    }
+    if(prev_data_day_av == NULL)
+    {
+        ESP_LOGI(TAG, "================ Prev mday Histroy Data Error!!! [%d] ================", prev_mday);
         errflag = true;
     }
 
     if(!errflag)
     {
-        int elaped = abs((int)(prev_data_day->data - cur_data_day->data));
+        int elaped = abs((int)(prev_data_day_av->min - cur_data_day->data));
         if(elaped >= 10 && elaped  < 1000){
             atmosphere_over10 = true;
-            atmosphere_over10_data[0] = prev_data_day;
-            atmosphere_over10_data[1] = cur_data_day;
+            atmosphere_record_data.atmosphere_over10_now = cur_data_day;
+            atmosphere_record_data.atmosphere_over10_week = prev_data_day_av;
             ESP_LOGI(TAG, "================ Histroy [%4d][ true] ================", elaped);
             //esp_event_post_to(view_event_handle, VIEW_EVENT_BASE, VIEW_EVENT_SENDMAIL, NULL, 0, portMAX_DELAY);
             __cmd_send(PKT_TYPE_CMD_BEEP_ON, NULL, 0);
         }
         else{
-            ESP_LOGI(TAG, "================ Histroy [%4d][false] ================", elaped);
+            ESP_LOGI(TAG, "================ Histroy [%4d][%d:%d][false] ================", elaped, (int)prev_data_day_av->min, (int)cur_data_day->data);
             //esp_event_post_to(view_event_handle, VIEW_EVENT_BASE, VIEW_EVENT_SENDMAIL, NULL, 0, portMAX_DELAY);
         }
     }
@@ -716,17 +727,6 @@ static void __sensor_history_data_day_update(time_t now)
     __sensor_history_data_day_insert_pa( __g_sensor_history_data.pa.data_day, &__g_sensor_present_data.pa, now);
 
     xSemaphoreGive(__g_data_mutex);
-
-    struct tm timeinfo = { 0 };
-    localtime_r( &now, &timeinfo);
-    int cur_hour = (((timeinfo.tm_hour * 60) + timeinfo.tm_min) * 60) / SECOND_ADJUST;
-    int previndex =  cur_hour-1;
-    if(previndex < 0){
-        previndex = DAY_MAX -1;
-    }
-    __check_atmosphere(previndex,cur_hour);
-
-
     __sensor_history_data_save();
 }
 
@@ -745,7 +745,6 @@ static void __sensor_history_data_week_update(time_t now)
     __sensor_history_data_week_insert_pa(__g_sensor_history_data.pa.data_week, &__g_sensor_present_data.pa, now);
 
     xSemaphoreGive(__g_data_mutex);
-
     __sensor_history_data_save();
 
 }
@@ -854,12 +853,27 @@ static void sensor_history_data_updata_task(void *arg)
     struct updata_queue_msg msg = {};
     while(1) {
         if(xQueueReceive(updata_queue_handle, &msg, portMAX_DELAY)) {
+            int check_atomosf = 0;
             if( msg.flag == 1) {
                 ESP_LOGI(TAG, "update day history data");
                 __sensor_history_data_day_update(msg.time);
+                check_atomosf++;
             } else if( msg.flag == 2) {
                 ESP_LOGI(TAG, "update week history data");
                 __sensor_history_data_week_update(msg.time);
+                check_atomosf++;
+            }
+            if(check_atomosf != 0){
+                time_t now = msg.time;
+                struct tm timeinfo = { 0 };
+                localtime_r( &now, &timeinfo);
+                int cur_hour = (((timeinfo.tm_hour * 60) + timeinfo.tm_min) * 60) / SECOND_ADJUST;
+                int cur_mday = timeinfo.tm_mday;
+                time_t pnow = now - (60*60*24); // minus 1day
+                localtime_r( &pnow, &timeinfo);
+                int prev_mday = timeinfo.tm_mday;
+
+                __check_atmosphere(prev_mday,cur_hour,cur_mday);
             }
         }
 

@@ -5,4 +5,7 @@
 #define DAY_MAX  (24*DAY_DIV_DATA)
 #define SECOND_ADJUST  (3600 / DAY_DIV_DATA)
 
+#define WEEK_MAX (7)
+
+
 #endif /* HISTORY_H */
