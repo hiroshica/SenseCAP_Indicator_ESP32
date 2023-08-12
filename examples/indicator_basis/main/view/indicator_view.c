@@ -1176,8 +1176,8 @@ static void __view_event_handler(void* handler_args, esp_event_base_t base, int3
         case VIEW_EVENT_WBGT_ATOMOS: {
             char data_buf[64];
             struct atmosphere_record *atmosphere_record_data = (struct atmosphere_record *)event_data;
-            ESP_LOGI(TAG, "event: VIEW_EVENT_WBGT_ATOMOS");
-            snprintf(data_buf, sizeof(data_buf), "%4dhPa", atmosphere_record_data->now_atmosphere);
+            ESP_LOGI(TAG, "event: VIEW_EVENT_WBGT_ATOMOS[%d:%d]", (int)atmosphere_record_data->now_atmosphere, (int)atmosphere_record_data->old_atmosphere);
+            snprintf(data_buf, sizeof(data_buf), "%4dhPa", (int)atmosphere_record_data->now_atmosphere);
             lv_label_set_text(ui_infobar1, data_buf);
             break;
         }
