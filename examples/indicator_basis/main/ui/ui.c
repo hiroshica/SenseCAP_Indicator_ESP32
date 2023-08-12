@@ -20,6 +20,7 @@ lv_obj_t *ui_colon;
 lv_obj_t *ui_adorn;
 lv_obj_t *ui_wifi_st_1;
 lv_obj_t *ui_ipaddr;
+lv_obj_t *ui_infobar1;
 lv_obj_t *ui_date_panel;
 lv_obj_t *ui_date;
 lv_obj_t *ui_location;
@@ -33,6 +34,7 @@ lv_obj_t *ui_wifi_st_2;
 //
 lv_obj_t *ui_time2;
 lv_obj_t *ui_ipaddr2;
+lv_obj_t *ui_infobar2;
 //
 lv_obj_t *ui_co2;
 lv_obj_t *ui_co2_icon;
@@ -71,6 +73,7 @@ lv_obj_t *ui_wifi__st_button_3;
 lv_obj_t *ui_wifi_st_3;
 lv_obj_t *ui_time3;
 lv_obj_t *ui_ipaddr3;
+lv_obj_t *ui_infobar3;
 lv_obj_t *ui_setting_icon;
 lv_obj_t *ui_setting_title;
 void ui_event_setting_wifi(lv_event_t *e);
@@ -463,6 +466,17 @@ void ui_screen_time_screen_init(void)
       lv_label_set_text(ui_ipaddr, "255.255.255.255");
       lv_obj_set_style_text_font(ui_ipaddr, &ui_font_font1, LV_PART_MAIN | LV_STATE_DEFAULT);
 
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      ui_infobar1 = lv_label_create(ui_background);
+      lv_obj_set_width(ui_infobar1, LV_SIZE_CONTENT);  /// 1
+      lv_obj_set_height(ui_infobar1, LV_SIZE_CONTENT); /// 1
+      lv_obj_set_x(ui_infobar1, 130);
+      lv_obj_set_y(ui_infobar1, 40);
+      lv_label_set_text(ui_infobar1, "atoms/ATOMS");
+      lv_obj_set_style_text_font(ui_infobar1, &ui_font_font1, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_color(ui_infobar1, lv_color_hex(0xFF1010), LV_PART_MAIN | LV_STATE_DEFAULT);
+      
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       ui_hour = lv_obj_create(ui_background);
       lv_obj_set_width(ui_hour, 200);
       lv_obj_set_height(ui_hour, 170);

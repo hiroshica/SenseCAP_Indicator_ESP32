@@ -619,27 +619,25 @@ static void __sensor_history_data_check(time_t now)
     xSemaphoreGive(__g_data_mutex);
 }
 
-struct atmosphere_record
-{
-    float old_atmosphere;
-    float now_atmosphere;
-};
-bool atmosphere_over10 = false;
-struct atmosphere_record atmosphere_record_data;
-
 static void __check_atmosphere(int prev_mday)
 {
     xSemaphoreTake(__g_data_mutex, portMAX_DELAY);
 
     struct sensor_data_minmax *p_data_week = __g_sensor_history_data.pa.data_week;
-    atmosphere_over10 = false;
+    struct atmosphere_record atmosphere_record_data;
+    atmosphere_record_data.atmosphere_over10 = false;
     atmosphere_record_data.old_atmosphere = -1;
     atmosphere_record_data.now_atmosphere = -1;
+    atmosphere_record_data.elaped_atmosphere = -1;
+    atmosphere_record_data.now_temp = -1;
+    atmosphere_record_data.now_hum = -1;
     struct tm timeinfo = { 0 };
 
     ESP_LOGI(TAG, "================ Histroy index[%d] ================", prev_mday);
     float old_atmosphere = __g_sensor_present_data.pa.day_min;
     float now_atmosphere = __g_sensor_present_data.pa.latest_value;
+    atmosphere_record_data.old_atmosphere = old_atmosphere;
+    atmosphere_record_data.now_atmosphere = now_atmosphere;
 
     for( int iI =0;  iI < WEEK_MAX; iI++){
         if(p_data_week[iI].valid){
@@ -659,21 +657,21 @@ static void __check_atmosphere(int prev_mday)
 
     {
         int elaped = abs((int)(old_atmosphere - now_atmosphere));
+        atmosphere_record_data.elaped_atmosphere = (float)elaped;
         if(elaped >= 10 && elaped  < 1000){
-            atmosphere_over10 = true;
-            atmosphere_record_data.old_atmosphere = old_atmosphere;
-            atmosphere_record_data.now_atmosphere = now_atmosphere;
+            atmosphere_record_data.atmosphere_over10 = true;
             ESP_LOGI(TAG, "================ Histroy [%4d][%d:%d][ true] ================", elaped,(int)old_atmosphere,(int)now_atmosphere);
-            //esp_event_post_to(view_event_handle, VIEW_EVENT_BASE, VIEW_EVENT_SENDMAIL, NULL, 0, portMAX_DELAY);
             __cmd_send(PKT_TYPE_CMD_BEEP_ON, NULL, 0);
         }
         else{
             ESP_LOGI(TAG, "================ Histroy [%4d][%d:%d][false] ================", elaped,(int)old_atmosphere,(int)now_atmosphere);
-            //esp_event_post_to(view_event_handle, VIEW_EVENT_BASE, VIEW_EVENT_SENDMAIL, NULL, 0, portMAX_DELAY);
         }
     }
-
+    atmosphere_record_data.now_temp = __g_sensor_present_data.temp.average;
+    atmosphere_record_data.now_hum = __g_sensor_present_data.humidity.average;
     xSemaphoreGive(__g_data_mutex);
+
+    esp_event_post_to(view_event_handle, VIEW_EVENT_BASE, VIEW_EVENT_WBGT_ATOMOS, &atmosphere_record_data, sizeof(struct atmosphere_record), portMAX_DELAY);
 }
 #if 0
     else{
@@ -1175,13 +1173,6 @@ static void __view_event_handler(void* handler_args, esp_event_base_t base, int3
             __sensor_shutdown();
             break;
         }
-#if 0
-        case VIEW_EVENT_SENDMAIL: {
-            ESP_LOGI(TAG, "event: VIEW_EVENT_SENDMAIL");
-            //__sensor_shutdown();
-            break;
-        }
-#endif
 //debug ui 
 #if 0
         case VIEW_EVENT_SENSOR_TEMP_HISTORY: {
@@ -1419,10 +1410,5 @@ int indicator_sensor_init(void)
     ESP_ERROR_CHECK(esp_event_handler_instance_register_with(view_event_handle, 
                                                             VIEW_EVENT_BASE, VIEW_EVENT_SHUTDOWN, 
                                                             __view_event_handler, NULL, NULL));
-#if 0
-    ESP_ERROR_CHECK(esp_event_handler_instance_register_with(view_event_handle, 
-                                                            VIEW_EVENT_BASE, VIEW_EVENT_SENDMAIL, 
-                                                            __view_event_handler, NULL, NULL));
-#endif
 }
 

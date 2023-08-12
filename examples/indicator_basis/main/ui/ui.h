@@ -163,6 +163,10 @@ extern lv_obj_t * ui_sensor_chart_week;
 extern lv_chart_series_t * ui_sensor_chart_week_series_hight;
 extern lv_chart_series_t * ui_sensor_chart_week_series_low;
 
+extern lv_obj_t *ui_infobar1;
+extern lv_obj_t *ui_infobar2;
+extern lv_obj_t *ui_infobar3;
+
 LV_IMG_DECLARE( ui_img_wifi_disconet_png);   // assets/wifi_disconet.png
 LV_IMG_DECLARE( ui_img_location_png);   // assets/location.png
 LV_IMG_DECLARE( ui_img_temp_1_png);   // assets/temp_1.png
@@ -186,6 +190,7 @@ LV_FONT_DECLARE( ui_font_font1);
 LV_FONT_DECLARE( ui_font_font2);
 LV_FONT_DECLARE( ui_font_font3);
 LV_FONT_DECLARE( ui_font_font4);
+//LV_FONT_DECLARE(Japan1);
 
 void ui_init(void);
 

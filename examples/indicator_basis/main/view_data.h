@@ -124,6 +124,17 @@ struct view_data_sensor_history_data
     float week_max;
 };
 
+struct atmosphere_record
+{
+    bool  atmosphere_over10;
+    float old_atmosphere;
+    float now_atmosphere;
+    float elaped_atmosphere;
+    float now_temp;
+    float now_hum;
+};
+
+
 enum {
     VIEW_EVENT_SCREEN_START = 0,  // uint8_t, enum start_screen, which screen when start
 
@@ -171,7 +182,7 @@ enum {
     VIEW_EVENT_FACTORY_RESET, //NULL
     VIEW_EVENT_SCREEN_CTRL,   // bool  0:disable , 1:enable
 
-    VIEW_EVENT_SENDMAIL,
+    VIEW_EVENT_WBGT_ATOMOS,
 
     VIEW_EVENT_ALL,
 };
