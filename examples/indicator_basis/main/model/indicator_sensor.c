@@ -636,8 +636,6 @@ static void __check_atmosphere(int prev_mday)
     ESP_LOGI(TAG, "================ Histroy index[%d] ================", prev_mday);
     float old_atmosphere = __g_sensor_present_data.pa.day_min;
     float now_atmosphere = __g_sensor_present_data.pa.latest_value;
-    atmosphere_record_data.old_atmosphere = old_atmosphere;
-    atmosphere_record_data.now_atmosphere = now_atmosphere;
 
     for( int iI =0;  iI < WEEK_MAX; iI++){
         if(p_data_week[iI].valid){
@@ -654,6 +652,10 @@ static void __check_atmosphere(int prev_mday)
                 ESP_LOGI(TAG, "================ Histroy no active mday data [%d] ================", iI);
         }
     }
+    atmosphere_record_data.old_atmosphere = old_atmosphere;
+    atmosphere_record_data.now_atmosphere = now_atmosphere;
+    atmosphere_record_data.now_temp = __g_sensor_present_data.temp.average;
+    atmosphere_record_data.now_hum = __g_sensor_present_data.humidity.average;
 
     {
         int elaped = abs((int)(old_atmosphere - now_atmosphere));
@@ -667,8 +669,6 @@ static void __check_atmosphere(int prev_mday)
             ESP_LOGI(TAG, "================ Histroy [%4d][%d:%d][false] ================", elaped,(int)old_atmosphere,(int)now_atmosphere);
         }
     }
-    atmosphere_record_data.now_temp = __g_sensor_present_data.temp.average;
-    atmosphere_record_data.now_hum = __g_sensor_present_data.humidity.average;
     xSemaphoreGive(__g_data_mutex);
 
     esp_event_post_to(view_event_handle, VIEW_EVENT_BASE, VIEW_EVENT_WBGT_ATOMOS, &atmosphere_record_data, sizeof(struct atmosphere_record), portMAX_DELAY);

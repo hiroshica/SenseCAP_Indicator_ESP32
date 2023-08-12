@@ -420,6 +420,19 @@ void ui_event_back4(lv_event_t *e)
       }
 }
 
+
+void ui_infobar_init(lv_obj_t *ui_infobar)
+{
+      lv_obj_set_width(ui_infobar, LV_SIZE_CONTENT);  /// 1
+      lv_obj_set_height(ui_infobar, LV_SIZE_CONTENT); /// 1
+      lv_obj_set_x(ui_infobar, 130);
+      lv_obj_set_y(ui_infobar, 40);
+      lv_label_set_text(ui_infobar, "atoms/ATOMS");
+      lv_obj_set_style_text_font(ui_infobar, &ui_font_font1, LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_bg_color(ui_infobar, lv_color_hex(0xFF1010), LV_PART_MAIN | LV_STATE_DEFAULT);
+}
+
+
 ///////////////////// SCREENS ////////////////////
 void ui_screen_time_screen_init(void)
 {
@@ -468,14 +481,7 @@ void ui_screen_time_screen_init(void)
 
       ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       ui_infobar1 = lv_label_create(ui_background);
-      lv_obj_set_width(ui_infobar1, LV_SIZE_CONTENT);  /// 1
-      lv_obj_set_height(ui_infobar1, LV_SIZE_CONTENT); /// 1
-      lv_obj_set_x(ui_infobar1, 130);
-      lv_obj_set_y(ui_infobar1, 40);
-      lv_label_set_text(ui_infobar1, "atoms/ATOMS");
-      lv_obj_set_style_text_font(ui_infobar1, &ui_font_font1, LV_PART_MAIN | LV_STATE_DEFAULT);
-      lv_obj_set_style_bg_color(ui_infobar1, lv_color_hex(0xFF1010), LV_PART_MAIN | LV_STATE_DEFAULT);
-      
+      ui_infobar_init(ui_infobar1);
       ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       ui_hour = lv_obj_create(ui_background);
       lv_obj_set_width(ui_hour, 200);
@@ -623,6 +629,10 @@ void ui_screen_sensor_screen_init(void)
       lv_obj_set_y(ui_ipaddr2, 20);
       lv_label_set_text(ui_ipaddr2, "255.255.255.255");
       lv_obj_set_style_text_font(ui_ipaddr2, &ui_font_font1, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      ui_infobar2 = lv_label_create(ui_screen_sensor);
+      ui_infobar_init(ui_infobar2);
       ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       ui_co2 = lv_btn_create(ui_screen_sensor);
       lv_obj_set_width(ui_co2, 140); /// 436
@@ -941,7 +951,10 @@ void ui_screen_setting_screen_init(void)
       lv_obj_set_y(ui_ipaddr3, 20);
       lv_label_set_text(ui_ipaddr3, "255.255.255.255");
       lv_obj_set_style_text_font(ui_ipaddr3, &ui_font_font1, LV_PART_MAIN | LV_STATE_DEFAULT);
-
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      ui_infobar3 = lv_label_create(ui_screen_setting);
+      ui_infobar_init(ui_infobar3);
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
       ui_setting_icon = lv_img_create(ui_screen_setting);
       lv_img_set_src(ui_setting_icon, &ui_img_setting_png);
       lv_obj_set_width(ui_setting_icon, LV_SIZE_CONTENT);  /// 21
